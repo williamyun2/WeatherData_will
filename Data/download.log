@@ -1,0 +1,210 @@
+2025-07-20 19:45 - INFO - Request ID is 4c918bc5-d95e-47cc-a982-71b6cfdd67e5
+2025-07-20 19:45 - INFO - status has been updated to accepted
+2025-07-20 19:45 - INFO - status has been updated to running
+2025-07-20 19:46 - INFO - status has been updated to successful
+2025-07-20 19:47 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-2/2025-07-21/49525dc2768de75715d333bb728aa2dc.zip
+2025-07-20 19:50 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 19:50 - INFO - found 1 files in the directory,and 0 files in the 3quarter
+2025-07-20 19:57 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 19:57 - INFO - found 1 files in the directory,and 0 files in the 3quarter
+2025-07-20 19:59 - INFO - Request ID is 563c0968-bc3a-44f7-9bc8-7307f4b5d1da
+2025-07-20 19:59 - INFO - status has been updated to accepted
+2025-07-20 19:59 - INFO - status has been updated to running
+2025-07-20 19:59 - INFO - status has been updated to successful
+2025-07-20 19:59 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-2/2025-07-21/49525dc2768de75715d333bb728aa2dc.zip
+2025-07-20 20:02 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 20:02 - INFO - found 1 files in the directory,and 0 files in the 3quarter
+2025-07-20 20:04 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 20:04 - INFO - found 1 files in the directory,and 0 files in the 3quarter
+2025-07-20 20:04 - INFO - Request ID is 24a8ddd8-236e-48ef-916f-e72b32f16fdf
+2025-07-20 20:04 - INFO - status has been updated to accepted
+2025-07-20 20:04 - INFO - status has been updated to running
+2025-07-20 20:04 - INFO - status has been updated to successful
+2025-07-20 20:04 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-2/2025-07-21/49525dc2768de75715d333bb728aa2dc.zip
+2025-07-20 20:07 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 20:07 - INFO - found 1 files in the directory,and 0 files in the 3quarter
+2025-07-20 20:09 - INFO - Request ID is 95224afd-e457-44fa-bbd7-35b97585c053
+2025-07-20 20:09 - INFO - status has been updated to accepted
+2025-07-20 20:10 - INFO - status has been updated to successful
+2025-07-20 20:10 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-3/2025-07-17/cda4c33281d9f7f2415503680d0a3ca2.zip
+2025-07-20 20:12 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 20:12 - INFO - found 2 files in the directory,and 1 files in the 3quarter
+2025-07-20 20:12 - INFO - Uploading daily .pww files to the cloud
+2025-07-20 20:12 - INFO - Attempting refresh to obtain initial access_token
+2025-07-20 20:12 - INFO - Refreshing access_token
+2025-07-20 20:12 - INFO - Uploading 20240711.pww ...
+2025-07-20 20:12 - INFO - Uploaded 20240711.pww successfully.
+2025-07-20 20:12 - INFO - 20250711.pww already exists in the cloud. Skipping upload.
+2025-07-20 20:12 - INFO - Archiving old files from the daily folder
+2025-07-20 20:17 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 20:17 - INFO - found 2 files in the directory,and 1 files in the 3quarter
+2025-07-20 20:17 - INFO - Uploading daily .pww files to the cloud
+2025-07-20 20:17 - INFO - Attempting refresh to obtain initial access_token
+2025-07-20 20:17 - INFO - Refreshing access_token
+2025-07-20 20:17 - INFO - 20240711.pww already exists in the cloud. Skipping upload.
+2025-07-20 20:17 - INFO - 20250711.pww already exists in the cloud. Skipping upload.
+2025-07-20 20:17 - INFO - Archiving old files from the daily folder
+2025-07-20 20:19 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 20:19 - INFO - found 2 files in the directory,and 1 files in the 3quarter
+2025-07-20 20:19 - INFO - Uploading daily .pww files to the cloud
+2025-07-20 20:19 - INFO - Attempting refresh to obtain initial access_token
+2025-07-20 20:19 - INFO - Refreshing access_token
+2025-07-20 20:19 - INFO - Uploading 20240711.pww ...
+2025-07-20 20:19 - INFO - Uploaded 20240711.pww successfully.
+2025-07-20 20:19 - INFO - Uploading 20250711.pww ...
+2025-07-20 20:19 - INFO - Uploaded 20250711.pww successfully.
+2025-07-20 20:19 - INFO - Archiving old files from the daily folder
+2025-07-20 20:19 - INFO - Uploading NorthAmerican2025_Q3.pww to the cloud
+2025-07-20 20:19 - INFO - Uploading NorthAmerican2025_Q3.pww ...
+2025-07-20 20:19 - INFO - Uploaded NorthAmerican2025_Q3.pww successfully.
+2025-07-20 20:23 - INFO - Request ID is f552ccf9-4a6d-48f3-9128-19ed344fc2be
+2025-07-20 20:23 - INFO - status has been updated to accepted
+2025-07-20 20:23 - INFO - status has been updated to running
+2025-07-20 20:23 - INFO - status has been updated to successful
+2025-07-20 20:23 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-20/506a5a5a7dbdfa4e390c38586e78130e.zip
+2025-07-20 20:27 - INFO - Request ID is 5c4b34e7-edb3-4410-bbda-1c2fc9be5766
+2025-07-20 20:27 - INFO - status has been updated to accepted
+2025-07-20 20:27 - INFO - status has been updated to running
+2025-07-20 20:27 - INFO - status has been updated to successful
+2025-07-20 20:27 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-20/8378616fd8906af7f7bd2c9c15cb0c82.zip
+2025-07-20 20:30 - INFO - Request ID is 7c870dfc-01d9-49dd-a917-6cea489aa617
+2025-07-20 20:30 - INFO - status has been updated to accepted
+2025-07-20 20:30 - INFO - status has been updated to successful
+2025-07-20 20:30 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-20/f7d8b3e5b14370b868f86c6e570bc1f7.zip
+2025-07-20 20:33 - INFO - Request ID is c582bfba-b3a6-4982-8a42-06f2cc116b46
+2025-07-20 20:33 - INFO - status has been updated to accepted
+2025-07-20 20:33 - INFO - status has been updated to running
+2025-07-20 20:33 - INFO - status has been updated to successful
+2025-07-20 20:33 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-20/48b7772641473f8c2f359c4e95aa6769.zip
+2025-07-20 20:36 - INFO - Request ID is 388b17d5-5429-495d-bc6b-2faee0c2cdeb
+2025-07-20 20:36 - INFO - status has been updated to accepted
+2025-07-20 20:37 - INFO - status has been updated to running
+2025-07-20 20:37 - INFO - status has been updated to successful
+2025-07-20 20:37 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-20/8a7c9ba56da980cebf5fc5dcafddddce.zip
+2025-07-20 20:39 - INFO - Request ID is de88c73a-2a28-4028-abee-c4f718275793
+2025-07-20 20:39 - INFO - status has been updated to accepted
+2025-07-20 20:39 - INFO - status has been updated to running
+2025-07-20 20:39 - INFO - status has been updated to successful
+2025-07-20 20:39 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-3/2025-07-20/c10902448cbe4a31632da54db5935385.zip
+2025-07-20 20:43 - INFO - Request ID is 610b96cb-1d26-4666-a3a4-90de05a4eda7
+2025-07-20 20:43 - INFO - status has been updated to accepted
+2025-07-20 20:43 - INFO - status has been updated to running
+2025-07-20 20:43 - INFO - status has been updated to successful
+2025-07-20 20:43 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-2/2025-07-20/704fb5a0b2d5438e4cb15fc7ae6a4c9e.zip
+2025-07-20 20:47 - INFO - Request ID is 6a77d677-7626-4271-9f7e-514494f3ef10
+2025-07-20 20:47 - INFO - status has been updated to accepted
+2025-07-20 20:47 - INFO - status has been updated to running
+2025-07-20 20:47 - INFO - status has been updated to successful
+2025-07-20 20:47 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-21/b2a2f1ab6459777717840d780a4631cd.zip
+2025-07-20 20:51 - INFO - Request ID is aa0ae503-3ac2-4037-800f-89f73ad7a12f
+2025-07-20 20:51 - INFO - status has been updated to accepted
+2025-07-20 20:51 - INFO - status has been updated to running
+2025-07-20 20:52 - INFO - status has been updated to successful
+2025-07-20 20:52 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-2/2025-07-21/cfb23a540f429c39b285f06863b1f2fd.zip
+2025-07-20 20:55 - INFO - Request ID is c1f9dc99-15c6-47a5-a2d7-3fe7a29dc1fd
+2025-07-20 20:55 - INFO - status has been updated to accepted
+2025-07-20 20:55 - INFO - status has been updated to running
+2025-07-20 20:56 - INFO - status has been updated to successful
+2025-07-20 20:56 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-2/2025-07-21/9624392ca294b142baa0e21a6e943160.zip
+2025-07-20 20:59 - INFO - Request ID is 6c528fe4-6111-47d3-8e4a-ba19bcaad8c6
+2025-07-20 20:59 - INFO - status has been updated to accepted
+2025-07-20 20:59 - INFO - status has been updated to running
+2025-07-20 21:00 - INFO - status has been updated to successful
+2025-07-20 21:00 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-3/2025-07-21/ef575e656b5bd6139131de1862878b8a.zip
+2025-07-20 21:03 - INFO - Request ID is e128e64e-3867-469b-9651-bc29ce485b75
+2025-07-20 21:03 - INFO - status has been updated to accepted
+2025-07-20 21:04 - INFO - status has been updated to running
+2025-07-20 21:04 - INFO - status has been updated to successful
+2025-07-20 21:04 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-21/66976ba087fbaf2baa39871576c21f5.zip
+2025-07-20 21:07 - INFO - Request ID is 50652b02-fa6d-414e-ada1-4b2c8b7dc603
+2025-07-20 21:07 - INFO - status has been updated to accepted
+2025-07-20 21:07 - INFO - status has been updated to running
+2025-07-20 21:07 - INFO - status has been updated to successful
+2025-07-20 21:07 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-1/2025-07-21/bfcd4d1be2347635c0fb693bc852155c.zip
+2025-07-20 21:10 - INFO - Request ID is e356bc0c-b7d9-450e-babc-b7c8997fbd2b
+2025-07-20 21:10 - INFO - status has been updated to accepted
+2025-07-20 21:11 - INFO - status has been updated to running
+2025-07-20 21:11 - INFO - status has been updated to successful
+2025-07-20 21:11 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-3/2025-07-21/18ccb49f453e79fb7faf7c4b57dd01b3.zip
+2025-07-20 21:15 - INFO - Request ID is bb0b4f8b-568e-4fc6-86a5-ea13659fc105
+2025-07-20 21:15 - INFO - status has been updated to accepted
+2025-07-20 21:15 - INFO - status has been updated to successful
+2025-07-20 21:15 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-3/2025-07-17/832dbcaef3fa35edc4510f330284ffd1.zip
+2025-07-20 21:26 - WARNING - Recovering from connection error [HTTPSConnectionPool(host='cds.climate.copernicus.eu', port=443): Max retries exceeded with url: /api/retrieve/v1/processes/reanalysis-era5-single-levels (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000021BF7FC7D90>: Failed to resolve 'cds.climate.copernicus.eu' ([Errno 11001] getaddrinfo failed)"))], attempt 1 of 500
+2025-07-20 21:26 - WARNING - Retrying in 120 seconds
+2025-07-20 21:28 - INFO - Retrying now...
+2025-07-20 21:28 - INFO - Request ID is 34bb3ab1-ef00-4d73-8a07-584645a66102
+2025-07-20 21:28 - INFO - status has been updated to accepted
+2025-07-20 21:28 - INFO - status has been updated to running
+2025-07-20 21:28 - INFO - status has been updated to successful
+2025-07-20 21:28 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-2/2025-07-17/57b537705a9c8c15c9e52056cf57ccf1.zip
+2025-07-20 21:29 - INFO - Request ID is bde967d2-7d05-435b-8613-cd70fdc011ac
+2025-07-20 21:29 - INFO - status has been updated to accepted
+2025-07-20 21:29 - INFO - status has been updated to successful
+2025-07-20 21:29 - INFO - Downloading https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-cache-3/2025-07-17/7bccaf0396180923a241ef26acea87c9.zip
+2025-07-20 21:29 - INFO - Request ID is 7e0b287c-cb59-49e3-a883-35476b9990d0
+2025-07-20 21:29 - INFO - status has been updated to accepted
+2025-07-20 21:29 - INFO - status has been updated to running
+2025-07-20 21:38 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 21:38 - INFO - found 17 files in the directory,and 1 files in the 3quarter
+2025-07-20 21:38 - INFO - Uploading daily .pww files to the cloud
+2025-07-20 21:38 - INFO - Attempting refresh to obtain initial access_token
+2025-07-20 21:38 - INFO - Refreshing access_token
+2025-07-20 21:38 - INFO - Uploading 20240711.pww ...
+2025-07-20 21:38 - INFO - Uploaded 20240711.pww successfully.
+2025-07-20 21:38 - INFO - Uploading 20250610.pww ...
+2025-07-20 21:38 - INFO - Uploaded 20250610.pww successfully.
+2025-07-20 21:38 - INFO - Uploading 20250611.pww ...
+2025-07-20 21:38 - INFO - Uploaded 20250611.pww successfully.
+2025-07-20 21:38 - INFO - Uploading 20250612.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250612.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250613.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250613.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250614.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250614.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250615.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250615.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250616.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250616.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250617.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250617.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250618.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250618.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250619.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250619.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250620.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250620.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250622.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250622.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250623.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250623.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250625.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250625.pww successfully.
+2025-07-20 21:39 - INFO - Uploading 20250626.pww ...
+2025-07-20 21:39 - INFO - Uploaded 20250626.pww successfully.
+2025-07-20 21:39 - INFO - 20250711.pww already exists in the cloud. Skipping upload.
+2025-07-20 21:39 - INFO - Archiving old files from the daily folder
+2025-07-20 21:39 - INFO - Uploading NorthAmerican2025_Q3.pww to the cloud
+2025-07-20 21:39 - INFO - Overwriting NorthAmerican2025_Q3.pww in the cloud.
+2025-07-20 21:39 - INFO - Uploading NorthAmerican2025_Q3.pww ...
+2025-07-20 21:39 - INFO - Uploaded NorthAmerican2025_Q3.pww successfully.
+2025-07-20 21:59 - INFO - getting 3, Quarter Start: 2025-07-01 00:00:00, Quarter End: 2025-09-30 00:00:00
+2025-07-20 21:59 - INFO - found 17 files in the directory,and 1 files in the 3quarter
+2025-07-20 21:59 - INFO - Uploading daily .pww files to the cloud
+2025-07-20 21:59 - INFO - Attempting refresh to obtain initial access_token
+2025-07-20 21:59 - INFO - Refreshing access_token
+2025-07-20 21:59 - INFO - Uploading 20240711.pww ...
+2025-07-20 21:59 - INFO - Uploaded 20240711.pww successfully.
+2025-07-20 21:59 - INFO - Uploading 20250610.pww ...
+2025-07-20 21:59 - INFO - Uploaded 20250610.pww successfully.
+2025-07-20 21:59 - INFO - Uploading 20250611.pww ...
+2025-07-20 21:59 - INFO - Uploaded 20250611.pww successfully.
+2025-07-20 21:59 - INFO - Uploading 20250612.pww ...
+2025-07-20 21:59 - INFO - Uploaded 20250612.pww successfully.
+2025-07-20 21:59 - INFO - Uploading 20250613.pww ...
+2025-07-20 21:59 - INFO - Uploaded 20250613.pww successfully.
+2025-07-20 21:59 - INFO - Uploading 20250614.pww ...
+2025-07-20 21:59 - INFO - Uploaded 20250614.pww successfully.
+2025-07-20 21:59 - INFO - Uploading 20250615.pww ...
+2025-07-20 21:59 - INFO - Uploaded 20250615.pww successfully.
+2025-07-20 21:59 - INFO - Uploading 20250616.pww ...
