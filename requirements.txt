@@ -1,0 +1,13 @@
+pandas
+numpy
+beautifulsoup4
+b3d
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+tqdm
+cronitor
+html5lib
+pyarrow
+matplotlib
