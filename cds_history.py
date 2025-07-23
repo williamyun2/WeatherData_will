@@ -268,7 +268,6 @@ def pack_quarter():
 
 
 
-
 def main():
     # * Check if the data folder exists, if not create it
     check = lambda p: os.makedirs(p, exist_ok=True)
@@ -277,26 +276,12 @@ def main():
     check(f"{Data}/pww/daily/")
     check(f"{Data}/zip/")
 
-    # * get the list of date needed to be fetched(last week)
     today = datetime.now()
-    # today_date = date(2024, 12, 31)  # today.date()  # Extract the date part
-    # --------- if use week number-------------------#
-    # current_week, current_year = today.isocalendar()[1], today.isocalendar()[0]  # Get the current week number and year
-    # current_week = today - timedelta(days=today.weekday())
-
     # * define the start and end time for the data to be fetched
-    # current_date = today - timedelta(days=5)  # give some time for the data to be ready on server
-    # past_date = current_date - timedelta(weeks=5)  # get data for the last 4 weeks
-    # dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
-    # print(f"Fetching data from {past_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}")
-
-
-    # For testing, we will process only one day.
-    # To revert, comment out this block and uncomment the one above.
-    test_date = date(2025, 7, 11)
-    dates = pd.date_range(test_date, periods=1, freq="D")
-
-
+    current_date = today - timedelta(days=5)  # give some time for the data to be ready on server
+    past_date = current_date - timedelta(weeks=5)  # get data for the last 4 weeks
+    dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
+    print(f"Fetching data from {past_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}")
 
 
     # ******************** CORRECTED SECTION START ********************
@@ -362,17 +347,32 @@ def main():
     NCtoPWW(ds, f"{Data}/pww/quater/{file_name}.pww")
 
 
-    # ******************** MODIFIED SECTION START ********************
-    # * Define the folder IDs from your provided links
+
+
+
+    # # team overbye google drive
+    # daily_folder_id = "1jN1NP3b5Nby-gpy5w1rqe2cgctESxqO-"
+    # daily_archive_folder_id = "1QkSwW9eLtBjo0Q5ia8akZkMpqJuMivDp"
+    # quarterly_folder_id = "12U8PNHHGIxCy8_GRzsF2KxZ4GneMWy6h"
+
+
+        
+    # test folders
     daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
     daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
     quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
 
+    # Before archiving, upload only truly new files
     logger.info("Uploading daily .pww files to the cloud")
-    hp.upload_to_drive(drive, daily_folder_id, f"{Data}/pww/daily/*.pww")
+    hp.upload_to_drive(drive, daily_folder_id, f"{Data}/pww/daily/*.pww", overwrite=False,
+        archive_folder_id=daily_archive_folder_id  # Add this!
+        )
 
     logger.info("Archiving old files from the daily folder")
     hp.archive_folder(drive, daily_folder_id, daily_archive_folder_id, timedelta(weeks=2))
+
+
+
 
     logger.info(f"Uploading {file_name}.pww to the cloud")
     # Upload the quarterly data, overwriting any existing file with the same name
