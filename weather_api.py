@@ -7,11 +7,13 @@ import pandas as pd
 import numpy as np
 import zipfile
 
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool
+import multiprocessing as mp
 import os, sys, glob ,re
 import struct
 import pytz
 import pickle
+import psutil
 
 import logging
 import logging.config
@@ -314,7 +316,7 @@ def download(date, t):
     files = []  # store the files that are downloaded
     
     # Set this once at the top - only thing you need to change!
-    MAX_X = 384  # Change to 384 for production
+    MAX_X = 384 # Change to 384 for production
     
     # Automatically calculate progress bar total
     max_files = MAX_X + 1  # Always correct!
@@ -368,33 +370,171 @@ def download(date, t):
 
 
 
+
+
+def read_wrapper(args):
+    """Wrapper function for the read function to work with Pool.map"""
+    file, date, t, data_path = args
+    
+    # Create a logger for this subprocess
+    import logging
+    logger = logging.getLogger("weather_api")
+    logger.debug(f"Reading {file}")
+    
+    dfs = []
+    keys = ["t2m", "d2m", "u10", "v10", "u100", "v100", "tcc"]
+    level = [2, 2, 10, 10, 100, 100, 0]
+    
+    try:
+        for k, l in zip(keys, level):
+            if k == "tcc":
+                dataset = xr.open_dataset(
+                    file, engine="cfgrib", 
+                    backend_kwargs={
+                        "filter_by_keys": {"stepType": "instant", "typeOfLevel": "atmosphere"}, 
+                        "indexpath": ""
+                    }
+                )
+            else:
+                dataset = xr.open_dataset(
+                    file, engine="cfgrib", 
+                    backend_kwargs={
+                        "filter_by_keys": {"typeOfLevel": "heightAboveGround", "level": l}, 
+                        "indexpath": ""
+                    }
+                )
+            df = dataset[k].to_dataframe()
+            dfs.append(df[k])
+            dataset.close()
+        
+        dfs.append(df["valid_time"])
+        df = pd.concat(dfs, axis=1)
+        df.reset_index(inplace=True)
+        
+        # Save to parquet
+        output_path = rf"{data_path}/csv/{date}/{date}_{t}/{os.path.basename(file)}.parquet"
+        df.to_parquet(output_path)
+        
+        # Explicit cleanup
+        del dfs, dataset
+        import gc
+        gc.collect()
+        
+        return df
+        
+    except Exception as e:
+        logger.error(f"Error processing {file}: {e}")
+        raise
+
+
+
+def process_files_safely(raw_files, date, t, data_path):
+    """Process files using a controlled number of worker processes"""
+    
+    # Determine optimal number of workers (don't exceed CPU cores or available memory)
+    cpu_count = mp.cpu_count()
+    available_memory_gb = psutil.virtual_memory().available / (1024**3)
+    
+    # Each process might use ~500MB-1GB of memory for weather data
+    # Conservative estimate: limit based on available memory
+    max_workers_by_memory = max(1, int(available_memory_gb / 1.5))  # 1.5GB per process
+    max_workers_by_cpu = max(1, cpu_count - 1)  # Leave one CPU core free
+    
+    # Use the more conservative limit
+    num_workers = min(max_workers_by_memory, max_workers_by_cpu, 8)  # Cap at 8 processes
+    
+    print(f"🔧 Using {num_workers} worker processes (CPU cores: {cpu_count}, Available RAM: {available_memory_gb:.1f}GB)")
+    
+    # Create logger for this function
+    import logging
+    logger = logging.getLogger("weather_api")
+    logger.info(f"Processing {len(raw_files)} files with {num_workers} workers")
+    
+    # Prepare arguments for each file - FIXED: Now includes data_path
+    file_args = [(file, date, t, data_path) for file in raw_files]
+    
+    # Process files in batches using process pool
+    dfs = []
+    
+    # Progress bar for file processing
+    processing_bar = tqdm(total=len(raw_files), desc="Processing weather files", unit="file")
+    
+    try:
+        with Pool(processes=num_workers) as pool:
+            # Use imap for better memory management and progress tracking
+            for df in pool.imap(read_wrapper, file_args):
+                dfs.append(df)
+                processing_bar.update(1)
+                processing_bar.set_postfix({"Processed": len(dfs), "Memory": f"{psutil.virtual_memory().percent:.1f}%"})
+                
+                # Optional: Add memory check and pause if memory usage gets too high
+                if psutil.virtual_memory().percent > 85:
+                    logger.warning(f"High memory usage: {psutil.virtual_memory().percent:.1f}%")
+                    time.sleep(1)  # Brief pause to let system recover
+                    
+    except Exception as e:
+        logger.error(f"Error in multiprocessing: {e}")
+        processing_bar.close()
+        raise
+    finally:
+        processing_bar.close()
+    
+    return dfs
+
+# Update the main function call:
+# Change this line in main():
+# dfs = process_files_safely(raw_files, date, t)
+# TO:
+# dfs = process_files_safely(raw_files, date, t, Data)
     
 
-# Updated main function with progress bar for file processing:
+
+
+
+
+
 @cronitor.job("zRlIAx")
 def main():
+    start_time = time.time()
+
+
+    TEST_MODE = True  # Set to False for production
+
+    if TEST_MODE:
+        # TEST FOLDERS - Safe for development/testing
+        MAIN_FOLDER_ID = "1ydqFR29caPIN2QaC46r-2uytedBzToId"      # Test upload folder
+        ARCHIVE_FOLDER_ID = "1TOTtY8i0o8BabyodeAHefm3j5pFrfvpX"   # Test archive folder
+        print("🧪 RUNNING IN TEST MODE - Uploading to test folders")
+    else:
+        # PRODUCTION FOLDERS - Only use when ready for production
+        MAIN_FOLDER_ID = "1kAOe-dGHByzZHijHGo8rmL7x4KY6OMav"       # Production upload folder
+        ARCHIVE_FOLDER_ID = "1TTa-bDV88sSf4strSW649UHPRddMHJtr"   # Production archive folder
+        print("🚨 RUNNING IN PRODUCTION MODE - Uploading to official folders")
+
+
+
+
     # *-----------------------set up the logger, monitor, and google drive-----------------------*#
     
-    # NEW CODE:
     gauth = GoogleAuth(settings_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.yaml"))
-    gauth.ServiceAuth()  # This is the key line for service account authentication
+    gauth.ServiceAuth()
     drive = GoogleDrive(gauth)
 
     log_file = f"{Data}/download.log"
-    logging.basicConfig(filename=log_file, level=logging.DEBUG if DEBUG else logging.INFO, format="%(asctime)s %(" "levelname)s %(" "message)s", datefmt="%Y%m%d-%H:%M:%S")
+    logging.basicConfig(filename=log_file, level=logging.DEBUG if DEBUG else logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%Y%m%d-%H:%M:%S")
     logger = logging.getLogger("weather_api")
 
     # initialize the helper module
     hp = helper(logger)
     
     # *-----------------------create the directories and find the date and time to download-----------------------*#
-    check = lambda path: True if os.path.exists(path) else os.makedirs(path)  # create directory if not exists
-    today = (datetime.now() - timedelta(days=0)) # get yesterday's date -timedelta(days=1)
-    date= today.strftime("%Y%m%d") 
-    pww_date = today.strftime("%Y-%m-%d")  # get yesterday's date -timedelta(days=1)
+    check = lambda path: True if os.path.exists(path) else os.makedirs(path)
+    today = (datetime.now() - timedelta(days=0))
+    date = today.strftime("%Y%m%d") 
+    pww_date = today.strftime("%Y-%m-%d")
     times = ["00", "06", "12", "18"]
-    t = times[datetime.now().hour // 6]  # get the nearest 6 hour interval
-    check(rf"{Data}/raw/{date}/{date}_{t}")  # create directory if not exists for those small files
+    t = times[datetime.now().hour // 6]
+    check(rf"{Data}/raw/{date}/{date}_{t}")
     check(rf"{Data}/csv/{date}/{date}_{t}")
     check(rf"{Data}/pww")
     check(rf"{Data}/csv/compressed")
@@ -403,63 +543,86 @@ def main():
     logger.info(f"Downloading data for {date}_{t}")
     print(f"🌤️  Starting weather data download for {date}_{t}")
     
-    download_files = download(date, t)  # download the data
+    download_files = download(date, t)
     
     print("📊 Processing downloaded files...")
-    procs = []
-    queue = Queue()
     raw_files = glob.glob(rf"{Data}/raw/{date}/{date}_{t}/*")
     
-    # Progress bar for file processing
-    processing_bar = tqdm(total=len(raw_files), desc="Processing weather files", unit="file")
-    
-    for file in raw_files:
-        p = Process(target=read, args=(file, date, t, queue))
-        procs.append(p)
-        p.start()
-    
-    dfs = []
-    for p in procs:
-        df = queue.get()
-        dfs.append(df)
-        processing_bar.update(1)
-        
-    processing_bar.close()
+    # Use ONLY the safe processing function
+    dfs = process_files_safely(raw_files, date, t, Data)
     
     logger.info(f"concatenating {len(dfs)} dataframes for {date}_{t}")
     print(f"🔗 Concatenating {len(dfs)} dataframes...")
     total = len(dfs)
-    df = pd.concat(dfs,copy=False)
-    dfs.clear()
-    for p in procs:
-        p.join()
+    df = pd.concat(dfs, copy=False)
+    dfs.clear()  # Free memory
     
+    
+
+        # Add this debug section right after creating the PWW file and before upload
+
     print("💾 Creating PWW file...")
     pww_file = df_to_pww(df, pww_date, t)
-    
+
+
+
+
+
+
     print("☁️  Uploading to Google Drive...")
     logger.info(f"Uploading {date}_{t}.pww to the cloud")
-    hp.upload_to_drive(drive, "1ydqFR29caPIN2QaC46r-2uytedBzToId", f"{Data}/pww/*",archive_folder_id="1TOTtY8i0o8BabyodeAHefm3j5pFrfvpX")
-    hp.archive_folder(drive, "1ydqFR29caPIN2QaC46r-2uytedBzToId", "1TOTtY8i0o8BabyodeAHefm3j5pFrfvpX", timedelta(days=7),date_pattern=re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}"),date_format="%Y-%m-%dT%H")
     
+    # Use the configured folder IDs
+    hp.upload_to_drive(
+        drive, 
+        MAIN_FOLDER_ID,           # Main upload folder
+        pww_file,
+        archive_folder_id=ARCHIVE_FOLDER_ID  # Archive folder
+    )
+    
+    hp.archive_folder(
+        drive, 
+        MAIN_FOLDER_ID,           # Source folder
+        ARCHIVE_FOLDER_ID,        # Archive destination
+        timedelta(days=7),
+        date_pattern=re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}"),
+        date_format="%Y-%m-%dT%H"
+    )
+
+
+    # *-----------------------clean up PWW file after successful upload-----------------------*#
+    print("🧹 Cleaning up PWW file...")
+    logger.info(f"Removing uploaded PWW file: {pww_file}")
+    try:
+        os.remove(pww_file)
+        logger.info(f"Successfully deleted {pww_file}")
+    except FileNotFoundError:
+        logger.warning(f"PWW file {pww_file} not found for deletion")
+    except Exception as e:
+        logger.error(f"Error deleting PWW file {pww_file}: {e}")
+
     # *-----------------------delete the raw and preprocess files after compress-----------------------*#
     print("🗑️  Cleaning up files...")
-    logger.info(f"deleteing raw {date}files ")
-    shutil.rmtree(rf"{Data}/raw/{date}")  # delete the raw files
+    logger.info(f"deleting raw {date} files")
+    shutil.rmtree(rf"{Data}/raw/{date}")
 
-    logger.info(f"Compressing {date}_{t} data")
-    csv_files = glob.glob(rf"{Data}/csv/{date}/{date}_{t}/*")
-    with zipfile.ZipFile(f"{Data}/csv/compressed/{date}_{t}.zip", "w") as zipf:
-        for f in csv_files:
-            zipf.write(f, os.path.basename(f))
-    logger.info(f"Uploading {date}_{t}.zip to the cloud , and deleting the files")
-    shutil.rmtree(rf"{Data}/csv/{date}")
-    
-    # *-----------------------update the meta file-----------------------*#
-    meta = pd.read_csv(f"{Data}/meta.csv")
-    df = pd.DataFrame({"Date": date, "Time": t, "RAW": [raw_files], "CSV": [csv_files], "PWW": pww_file, "Drive": 1}, index=[0])
-    meta = pd.concat([meta, df])
-    meta.to_csv(f"{Data}/meta.csv", index=False)
+
+
+    # # *-----------------------update the meta file-----------------------*#
+    # meta = pd.read_csv(f"{Data}/meta.csv")
+    # new_row = pd.DataFrame({"Date": [date], "Time": [t], "RAW": [str(raw_files)], "CSV": [str(csv_files)], "PWW": [pww_file], "Drive": [1]})
+    # meta = pd.concat([meta, new_row], ignore_index=True)
+    # meta.to_csv(f"{Data}/meta.csv", index=False)
+
+
+
+
+
+    # ⏱️ END TIMER & REPORT
+    total_time = time.time() - start_time
+    minutes = total_time / 60
+    hours = minutes / 60
+    print(f"⏱️  TOTAL EXECUTION TIME: {total_time:.1f} seconds ({minutes:.1f} minutes)")
 
     print(f"✅ All done! Downloaded {total} files and uploaded to cloud")
     return f"downloaded {date}_{t} data for total of {total} files, and uploaded to the cloud"
@@ -467,7 +630,6 @@ def main():
 
 
 
-
-
 if __name__ == "__main__":
     main()
+

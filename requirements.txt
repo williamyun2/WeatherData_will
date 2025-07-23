@@ -10,3 +10,5 @@ PyDrive2
 cronitor
 cartopy
 tqdm
+ecmwflibs 
+psutil
