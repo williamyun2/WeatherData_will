@@ -54,8 +54,8 @@ if os.name != "nt":
 
 
 sys.path.append(os.path.dirname(__file__))
-os.makedirs(os.path.join(os.path.dirname(__file__), "Data"), exist_ok=True)
-Data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Data")  # * Path to the data folder
+os.makedirs(os.path.join(os.path.dirname(__file__), "data"), exist_ok=True)
+Data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")  # * Path to the data folder
 
 # Add parent directory to the module search path(only need for debugging)
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -498,7 +498,7 @@ def main():
     start_time = time.time()
 
 
-    TEST_MODE = True  # Set to False for production
+    TEST_MODE = False  # Set to False for production
 
     if TEST_MODE:
         # TEST FOLDERS - Safe for development/testing

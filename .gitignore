@@ -5,4 +5,5 @@ venv/
 pydrive2-461721-19b0d14ec905.json
 
 # Data folder
-Data/
+data/
+

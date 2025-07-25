@@ -1,0 +1,2 @@
+#run python script every day at 0, 6, 12, 18
+0 0,6,11,18 * * * (cd /noaa && /usr/local/bin/python weather_api.py) > /proc/1/fd/1 2>/proc/1/fd/2
