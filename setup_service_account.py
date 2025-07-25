@@ -117,7 +117,7 @@ def create_test_folders(service):
     
     try:
         # Import helper
-        from helper.helper import GoogleDriveHelper, setup_test_folders
+        from helper import GoogleDriveHelper, setup_test_folders
         
         folders = setup_test_folders(service, logger)
         if folders:

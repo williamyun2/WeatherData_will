@@ -2,7 +2,8 @@
 
 
 import cdsapi
-from datetime import date, timedelta, datetime, time
+import time  # Use this instead of 'from datetime import time'
+from datetime import datetime, timedelta  # Import specific datetime classes
 import os, sys, shutil
 from tqdm import tqdm
 import pandas as pd
@@ -33,14 +34,14 @@ CDS = cdsapi.Client("https://cds.climate.copernicus.eu/api", "9a07b105-3cb2-4d69
 
 # * Set the path to the data folder
 sys.path.append(os.path.dirname(__file__))
-os.makedirs(os.path.join(os.path.dirname(__file__), "Data"), exist_ok=True)
-Data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Data")  # * Path to the data folder
+os.makedirs(os.path.join(os.path.dirname(__file__), "data"), exist_ok=True)
+Data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")  # * Path to the data folder
 
 # Add parent directory to the module search path(only need for debugging)
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, parent_dir)
 
-from helper.helper import helper
+from helper import helper
 
 # print(sys.path)
 # print(os.getcwd())
@@ -350,17 +351,24 @@ def main():
 
 
 
-    # # team overbye google drive
-    # daily_folder_id = "1jN1NP3b5Nby-gpy5w1rqe2cgctESxqO-"
-    # daily_archive_folder_id = "1QkSwW9eLtBjo0Q5ia8akZkMpqJuMivDp"
-    # quarterly_folder_id = "12U8PNHHGIxCy8_GRzsF2KxZ4GneMWy6h"
+    # team overbye google drive
+    daily_folder_id = "1jN1NP3b5Nby-gpy5w1rqe2cgctESxqO-"
+    daily_archive_folder_id = "1QkSwW9eLtBjo0Q5ia8akZkMpqJuMivDp"
+    quarterly_folder_id = "12U8PNHHGIxCy8_GRzsF2KxZ4GneMWy6h"
 
 
         
-    # test folders
-    daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
-    daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
-    quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
+    # # test folders
+    # daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
+    # daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
+    # quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
+
+
+
+
+
+
+
 
     # Before archiving, upload only truly new files
     logger.info("Uploading daily .pww files to the cloud")

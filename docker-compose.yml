@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  service_cds:
+    build: .
+    image: image_cds:latest
+    container_name: container_cds
+    environment:
+      TZ: America/Chicago
+    working_dir: /cds
+    restart: unless-stopped
+    volumes:
+      - volume_cds_data:/cds/data
+
+volumes:
+  volume_cds_data:
+    driver: local
+
+
