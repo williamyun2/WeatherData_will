@@ -1,0 +1,54 @@
+2025-07-24 14:54:25,321 [INFO] Preparing to download sfc data for 2025-07-24T12:00:00
+2025-07-24 14:54:25,404 [INFO] Found 1 dates to fetch.
+2025-07-24 14:54:25,414 [INFO] 🧵 Working on 2 tasks with 2 threads.
+2025-07-24 14:54:25,971 [INFO] Number of Herbie objects: 2
+2025-07-24 14:54:25,972 [INFO] 🧵 Working on 2 tasks with 2 threads.
+2025-07-24 14:57:49,219 [INFO] Preparing to download sfc data for 2025-07-24T12:00:00
+2025-07-24 14:57:49,232 [INFO] Found 1 dates to fetch.
+2025-07-24 14:57:49,238 [INFO] 🧵 Working on 2 tasks with 2 threads.
+2025-07-24 14:57:49,450 [INFO] Number of Herbie objects: 2
+2025-07-24 14:57:49,450 [INFO] 🧵 Working on 2 tasks with 2 threads.
+2025-07-24 14:58:11,883 [INFO] Zipped C:\class\code\service_testing\HRRR\Data\pww\daily\2025-07-24T09Z_sfc_48_TX.pww to C:\class\code\service_testing\HRRR\Data\zip\2025-07-24T09Z_sfc_48_TX.zip and removed the original file.
+2025-07-24 14:58:11,886 [INFO] Processed 2025-07-24T09Z_sfc_48_TX.pww
+2025-07-24 14:58:11,894 [INFO] Uploading processed files to Google Drive...
+2025-07-24 14:58:11,899 [INFO] Attempting refresh to obtain initial access_token
+2025-07-24 14:58:11,906 [INFO] Refreshing access_token
+2025-07-24 14:58:13,059 [INFO] 2025-07-23T15Z_sfc_48_TX.zip already exists in the cloud. Skipping upload.
+2025-07-24 14:58:13,060 [INFO] Uploading 2025-07-24T09Z_sfc_48_TX.zip ...
+2025-07-24 14:58:23,938 [INFO] Uploaded 2025-07-24T09Z_sfc_48_TX.zip successfully.
+2025-07-24 16:50:27,463 [INFO] Preparing to download sfc data for 2025-07-24T12:00:00
+2025-07-24 16:50:27,614 [INFO] Found 5 dates to fetch.
+2025-07-24 16:50:27,652 [INFO] 🧵 Working on 48 tasks with 48 threads.
+2025-07-24 16:50:28,882 [INFO] Number of Herbie objects: 48
+2025-07-24 16:50:28,885 [INFO] 🧵 Working on 48 tasks with 20 threads.
+2025-07-24 17:32:32,584 [INFO] Zipped C:\class\code\service_testing\hrrr\data\pww\daily\2025-07-23T12Z_sfc_48_TX.pww to C:\class\code\service_testing\hrrr\data\zip\2025-07-23T12Z_sfc_48_TX.zip and removed the original file.
+2025-07-24 17:32:32,594 [INFO] Processed 2025-07-23T12Z_sfc_48_TX.pww
+2025-07-24 17:32:32,749 [INFO] 🧵 Working on 48 tasks with 48 threads.
+2025-07-24 17:32:33,131 [INFO] Number of Herbie objects: 48
+2025-07-24 17:32:33,159 [INFO] 🧵 Working on 48 tasks with 20 threads.
+2025-07-24 17:34:00,843 [ERROR] Failed to process 2025-07-23T12:00:00: [WinError 1450] Insufficient system resources exist to complete the requested service
+2025-07-24 17:34:00,907 [INFO] 🧵 Working on 48 tasks with 48 threads.
+2025-07-24 17:34:02,226 [INFO] Number of Herbie objects: 48
+2025-07-24 17:34:02,244 [INFO] 🧵 Working on 48 tasks with 20 threads.
+2025-07-24 18:13:19,216 [INFO] Zipped C:\class\code\service_testing\hrrr\data\pww\daily\2025-07-24T00Z_sfc_48_TX.pww to C:\class\code\service_testing\hrrr\data\zip\2025-07-24T00Z_sfc_48_TX.zip and removed the original file.
+2025-07-24 18:13:19,224 [INFO] Processed 2025-07-24T00Z_sfc_48_TX.pww
+2025-07-24 18:13:19,374 [INFO] 🧵 Working on 48 tasks with 48 threads.
+2025-07-24 18:13:19,855 [INFO] Number of Herbie objects: 48
+2025-07-24 18:13:19,877 [INFO] 🧵 Working on 48 tasks with 20 threads.
+2025-07-24 18:14:17,196 [ERROR] Failed to process 2025-07-24T12:00:00: [WinError 1450] Insufficient system resources exist to complete the requested service
+2025-07-24 18:14:17,283 [INFO] 🧵 Working on 48 tasks with 48 threads.
+2025-07-24 18:14:18,629 [INFO] Number of Herbie objects: 48
+2025-07-24 18:14:18,634 [INFO] 🧵 Working on 48 tasks with 20 threads.
+2025-07-24 18:23:24,424 [INFO] Zipped C:\class\code\service_testing\hrrr\data\pww\daily\2025-07-24T12Z_sfc_48_TX.pww to C:\class\code\service_testing\hrrr\data\zip\2025-07-24T12Z_sfc_48_TX.zip and removed the original file.
+2025-07-24 18:23:24,431 [INFO] Processed 2025-07-24T12Z_sfc_48_TX.pww
+2025-07-24 18:23:24,568 [INFO] Uploading processed files to Google Drive...
+2025-07-24 18:23:24,621 [INFO] Attempting refresh to obtain initial access_token
+2025-07-24 18:23:24,687 [INFO] Refreshing access_token
+2025-07-24 18:23:25,952 [INFO] 2025-07-23T12Z_sfc_48_TX.zip already exists in the cloud. Skipping upload.
+2025-07-24 18:23:25,952 [INFO] 2025-07-23T15Z_sfc_48_TX.zip already exists in the cloud. Skipping upload.
+2025-07-24 18:23:25,953 [INFO] Uploading 2025-07-24T00Z_sfc_48_TX.zip ...
+2025-07-24 18:24:26,980 [INFO] Uploaded 2025-07-24T00Z_sfc_48_TX.zip successfully.
+2025-07-24 18:24:26,981 [INFO] Uploading 2025-07-24T09Z_sfc_48_TX.zip ...
+2025-07-24 18:24:39,248 [INFO] Uploaded 2025-07-24T09Z_sfc_48_TX.zip successfully.
+2025-07-24 18:24:39,248 [INFO] Uploading 2025-07-24T12Z_sfc_48_TX.zip ...
+2025-07-24 18:25:44,189 [INFO] Uploaded 2025-07-24T12Z_sfc_48_TX.zip successfully.

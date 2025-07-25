@@ -1,0 +1,23 @@
+# Core Python packages
+numpy
+pandas
+matplotlib
+dask
+netCDF4
+bottleneck
+fastparquet
+xarray
+rioxarray
+geopandas
+cfgrib
+plotly
+tqdm
+beautifulsoup4
+html5lib
+cronitor
+PyDrive2
+cartopy
+herbie-data
+b3d
+
+# Note: lzma, gzip, bz2 are built-in Python modules - no need to install
