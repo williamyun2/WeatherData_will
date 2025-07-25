@@ -27,7 +27,7 @@ cronitor.api_key = "dc75b70251984b21b2d51290b7215dcf"
 # * Set the path to the data folder
 
 sys.path.append(os.path.dirname(__file__))
-Data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Data")  # * Path to the data folder
+Data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")  # * Path to the data folder
 # set the logging configuration for the script
 
 # # * Set the timezone to CDT https://www.geeksforgeeks.org/python-time-tzset-function/
@@ -78,11 +78,11 @@ def check():
             meta_data.set_index("url", inplace=True)
             meta_data.to_csv(path, index=True)
 
-    check_dir("Data")
-    check_dir("Data/1D")
-    check_dir("Data/3D")
-    check_meta("Data/meta_data1d.csv")
-    check_meta("Data/meta_data3d.csv")
+    check_dir("data")
+    check_dir("data/1D")
+    check_dir("data/3D")
+    check_meta("data/meta_data1d.csv")
+    check_meta("data/meta_data3d.csv")
 
 
     
@@ -119,7 +119,7 @@ def get_data(base_url, meta_path, typ="1D", limit=None):
             while i+2 < (len(df)): # the last two data is no always available
                 url = base_url + os.path.basename(df.iloc[i]["url"])
                 logger.debug(f"Downloading {url}")
-                path = f"Data/{typ}/{df.iloc[i]['date'].strftime('%Y%m%d')}"
+                path = f"data/{typ}/{df.iloc[i]['date'].strftime('%Y%m%d')}"
                 check_dir(path)
                 now = time.time_ns()
                 try:  # * first try to download the data
@@ -154,7 +154,7 @@ def get_data(base_url, meta_path, typ="1D", limit=None):
                 i += 1
                 pbar.update(1)
         except Exception as e:
-            logger.info(f"Data downloaded interrupted casue by{e} ")
+            logger.info(f"data downloaded interrupted casue by{e} ")
         
     
     logger.info(f"Download completed, failed to download {fail} files")
@@ -251,7 +251,7 @@ def df_to_b3d(df, path): #? this method is not optimized, may be try geojson for
 
 def process_data(typ="1D",day=(datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y%m%d')):
     print(f"process_data called with typ={typ}, day={day}")
-    pattern = f"Data/{typ}/{day}/*.parquet"
+    pattern = f"data/{typ}/{day}/*.parquet"
     print(f"Looking for files matching: {pattern}")
     files=glob.glob(pattern)
     print(f"Found {len(files)} parquet files: {files}")
@@ -260,8 +260,8 @@ def process_data(typ="1D",day=(datetime.datetime.now() - datetime.timedelta(days
         print(f"Processing {len(files)} files, for {day}")
         try:
             df = pd.concat([pd.read_parquet(f) for f in files])
-            print(f"Concatenated DataFrame shape: {df.shape}")
-            output_path = f"Data/{typ}/{day}_{typ}.b3d"
+            print(f"Concatenated dataFrame shape: {df.shape}")
+            output_path = f"data/{typ}/{day}_{typ}.b3d"
             print(f"Creating B3D file: {output_path}")
             df_to_b3d(df, output_path)
             print(f"B3D file created successfully!")
@@ -391,8 +391,8 @@ def main():
     # *-----------------------Download the data from the Efield-----------------------*#
     url_1d = "https://services.swpc.noaa.gov/json/lists/rgeojson/US-Canada-1D/"
     url_3d = "https://services.swpc.noaa.gov/json/lists/rgeojson/InterMagEarthScope/"
-    meta1d = "Data/meta_data1d.csv"
-    meta3d = "Data/meta_data3d.csv"
+    meta1d = "data/meta_data1d.csv"
+    meta3d = "data/meta_data3d.csv"
     num_1d = get_data(url_1d, meta1d, "1D")  # read the meta data)
     num_3d = get_data(url_3d, meta3d, "3D")  # downloads 4 filessssssssssssssss
     
@@ -424,12 +424,12 @@ def main():
         print("Starting uploads...")
 
         # test mode
-        upload_to_drive(drive_service, "1fnw5Olj7OOGbip19UTMgEktGUZ7dMapi", "Data/1D/*b3d")
-        upload_to_drive(drive_service, "1emw7QyS1ICXBt8OhYBZ1GN82mDl36PpY", "Data/3D/*b3d")    
+        # upload_to_drive(drive_service, "1fnw5Olj7OOGbip19UTMgEktGUZ7dMapi", "data/1D/*b3d")
+        # upload_to_drive(drive_service, "1emw7QyS1ICXBt8OhYBZ1GN82mDl36PpY", "data/3D/*b3d")    
 
         # production mode
-        # upload_to_drive(drive_service, "1pItMc-ViWiRbY6G49sLlmP_0B5fRMh1W", "Data/1D/*b3d")
-        # upload_to_drive(drive_service, "1JIOe_ANudOk2zW9v9LpSJ9UeKX-Zo4Ch", "Data/3D/*b3d")    
+        upload_to_drive(drive_service, "1pItMc-ViWiRbY6G49sLlmP_0B5fRMh1W", "data/1D/*b3d")
+        upload_to_drive(drive_service, "1JIOe_ANudOk2zW9v9LpSJ9UeKX-Zo4Ch", "data/3D/*b3d")    
 
         print("Upload calls completed")
         
