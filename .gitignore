@@ -4,4 +4,7 @@ env/
 # Ignore Google credentials file
 pydrive2-461721-19b0d14ec905.json
 
-Data/
+# Data folder
+data/
+
+__pycache__/
