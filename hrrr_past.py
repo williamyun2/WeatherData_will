@@ -99,31 +99,6 @@ def ensure_directories():
         os.makedirs(path, exist_ok=True)
 
 
-def get_target_dates(meta_file, lag_days):
-    """
-    Get list of target dates (6-hourly) to fetch (not already processed).
-    Only matches on year, month, day, and hour (ignores minutes/seconds).
-    """
-    # Read meta file or create empty DataFrame
-    if os.path.exists(meta_file):
-        meta = pd.read_csv(meta_file)
-    else:
-        meta = pd.DataFrame(columns=["date", "status"])
-    meta["date"] = pd.to_datetime(meta["date"], errors='coerce')
-    meta["status"] = meta["status"].astype(bool)
-    meta["date_hour"] = meta["date"].dt.floor('h')
-    # Find the most recent 6-hour boundary before now
-    now = datetime.now()
-    last_6h = now.replace(hour=(now.hour // 6) * 6, minute=0, second=0, microsecond=0)
-    all_dates = pd.date_range(last_6h - timedelta(days=lag_days), last_6h, freq="6h")
-    # Only keep dates not already processed (by hour)
-    processed_hours = set(meta.loc[meta["status"], "date_hour"])
-    pending_dates = [d for d in all_dates if d not in processed_hours]
-
-    return pending_dates, meta
-
-
-
 
 
 
@@ -195,7 +170,7 @@ def main():
     logger.info(f"Found {len(dates)} historical dates to process")
     
     # Process in batches (don't overwhelm NOAA servers)
-    BATCH_SIZE = 10  # Process 10 days at a time
+    BATCH_SIZE = 5  # Process 10 days at a time
     
     for i in range(0, len(dates), BATCH_SIZE):
         batch = dates[i:i+BATCH_SIZE]
