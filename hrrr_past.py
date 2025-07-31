@@ -1,13 +1,12 @@
 # author: Thomas Chen 
 # date: 2025-05-01
 # description: This script automates the download and processing of HRRR weather forecast data.
-# It fetches data for the last 24 hours, processes it into a specific format, and uploads it to Google Drive.
-# version: 1.2
+# It fetches historical data from Jan 1, 2025 to present, processes it into PWW format, and uploads to Google Drive.
+# version: 1.3
 # notes: with the help of AI, this script has been improved for better readability and efficiency.
 # =========================
 
 import os
-os.environ['PYTHONIOENCODING'] = 'utf-8'
 import sys
 import time
 import logging
@@ -30,12 +29,12 @@ from helper import helper
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
-from datetime import datetime, timedelta
-import pandas as pd
-import os
 # =========================
 # Configuration and Globals
 # =========================
+
+# Set encoding and timezone
+os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 # Set timezone to America/Chicago
 if os.name != "nt":
@@ -49,8 +48,8 @@ os.makedirs(DATA_DIR, exist_ok=True)
 # Herbie/HRRR configuration
 PRODUCT = "sfc"
 STATE = "TX"  # US for CONUS
+MODEL_HOUR = "12"  # Model run hour (12Z)
 REGEX = r":(?:TMP|DPT|UGRD|VGRD|TCDC|DSWRF|COLMD|GUST|CPOFP|PRATE):((2|8|10|80) m above|entire atmosphere|surface|entire atmosphere single layer)"
-# REGEX = r":(?:TMP|DPT|UGRD|VGRD|TCDC|DSWRF|COLMD|GUST|CPOFP|PRATE):(?:(?:2|8|10|80) m above ground|entire atmosphere|surface|entire atmosphere \(considered as a single layer\))"
 
 GRIB_FOLDER = os.path.join(DATA_DIR, "grib")
 NC_FOLDER = os.path.join(DATA_DIR, "nc")
@@ -60,7 +59,6 @@ ZIP_FOLDER = os.path.join(DATA_DIR, "zip")
 # =========================
 # Logging Setup
 # =========================
-
 
 LOG_FILE = os.path.join(BASE_DIR, "process.log")
 
@@ -86,9 +84,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
-
-
 # =========================
 # Utility Functions
 # =========================
@@ -97,15 +92,6 @@ def ensure_directories():
     """Ensure necessary directories exist."""
     for path in [NC_FOLDER, PWW_DAILY_FOLDER, ZIP_FOLDER, GRIB_FOLDER]:
         os.makedirs(path, exist_ok=True)
-
-
-
-
-
-
-
-
-
 
 def get_historical_dates(start_date, end_date, meta_file):
     """Get all dates from start_date to end_date that need processing."""
@@ -119,34 +105,24 @@ def get_historical_dates(start_date, end_date, meta_file):
         meta = pd.DataFrame(columns=["date", "status"])
         processed_dates = set()
     
-    # Generate all dates from Jan 1 to now (daily 12Z only)
+    # Generate all dates from start to end (daily at specified hour only)
     all_dates = pd.date_range(
         start=start_date, 
         end=end_date, 
         freq="D"  # Daily instead of 6-hourly
     )
     
-    # Add 12Z to each date
-    all_dates = [d.replace(hour=12) for d in all_dates]
+    # Add specified hour to each date
+    all_dates = [d.replace(hour=int(MODEL_HOUR)) for d in all_dates]
     
     # Filter out already processed
     pending_dates = [d for d in all_dates if d.floor('D') not in processed_dates]
     
     return pending_dates, meta
 
-
-
-
-
-
-
-
-
-
 # =========================
 # Main Processing Function
 # =========================
-
 
 def main():
     ensure_directories()
@@ -155,9 +131,7 @@ def main():
     START_DATE = datetime(2025, 1, 1)  # Jan 1, 2025
     END_DATE = datetime.now() - timedelta(days=2)  # Up to 2 days ago
     
-    t = "12"  # Always 12Z
-    
-    # Setup auth (same as before)
+    # Setup auth
     gauth = GoogleAuth(settings_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.yaml"))
     gauth.ServiceAuth()
     drive = GoogleDrive(gauth)
@@ -170,19 +144,19 @@ def main():
     logger.info(f"Found {len(dates)} historical dates to process")
     
     # Process in batches (don't overwhelm NOAA servers)
-    BATCH_SIZE = 5  # Process 10 days at a time
+    BATCH_SIZE = 5  # Process 5 days at a time
     
     for i in range(0, len(dates), BATCH_SIZE):
         batch = dates[i:i+BATCH_SIZE]
         logger.info(f"Processing batch {i//BATCH_SIZE + 1}: {len(batch)} dates")
         
         for target_date in tqdm(batch, desc=f"Batch {i//BATCH_SIZE + 1}"):
-            # Same processing logic as before
-            date_iso = target_date.strftime("%Y-%m-%d") + "T12:00:00"
-            pww_date = target_date.strftime("%Y-%m-%dT12Z")
+            # Create date strings using MODEL_HOUR variable
+            date_iso = target_date.strftime("%Y-%m-%d") + f"T{MODEL_HOUR}:00:00"
+            pww_date = target_date.strftime(f"%Y-%m-%dT{MODEL_HOUR}Z")
             
             try:
-                # Download and process (same as current code)
+                # Download and process
                 H = FastHerbie([date_iso], model="hrrr", product=PRODUCT, fxx=range(1, 49), save_dir=GRIB_FOLDER)
                 H.download(REGEX)
                 ds = get_multiple_HRRR([date_iso], list(range(1, 49)), PRODUCT, REGEX, GRIB_FOLDER)
@@ -216,10 +190,5 @@ def main():
         # shutil.rmtree(GRIB_FOLDER)
         # os.makedirs(GRIB_FOLDER, exist_ok=True)
 
-
-
-
-
-        
 if __name__ == "__main__":
     main()
