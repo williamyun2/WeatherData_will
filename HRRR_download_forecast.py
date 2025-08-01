@@ -126,93 +126,80 @@ def get_target_dates(meta_file, lag_days):
 # Main Processing Function
 # =========================
 
+
 def main():
-    
-    
-    
-    
-    
     """Main data fetching and processing routine."""
     ensure_directories()
 
-    # Determine target time and date strings
-    # times = ["00", "06", "12", "18"]
-    # t = times[now.hour // 6]
-
+    # Get today's 12Z
     now = datetime.now()
-    times = ["12"]
-    t = "12"  # Always use 12Z regardless of when script runs
-    date_str = now.strftime("%Y-%m-%d") + f"T{t}:00:00"
-    pww_date = now.strftime("%Y-%m-%d") + f"T{t}Z"
-
-    logger.info(f"Preparing to download {PRODUCT} data for {date_str}")
-
+    target_date = now.replace(hour=12, minute=0, second=0, microsecond=0)
     
+    # If it's before 12Z today, use yesterday's 12Z
+    if now.hour < 12:
+        target_date -= timedelta(days=1)
     
+    date_iso = target_date.strftime("%Y-%m-%dT12:00:00")
+    pww_date = target_date.strftime("%Y-%m-%dT12Z")
 
-    
+    logger.info(f"Preparing to download {PRODUCT} data for {date_iso}")
+
+    # Check if already processed
+    meta_file = os.path.join(DATA_DIR, "meta.csv")
+    if os.path.exists(meta_file):
+        meta = pd.read_csv(meta_file)
+        meta["date"] = pd.to_datetime(meta["date"])
+        if target_date in meta[meta["status"] == True]["date"].values:
+            logger.info(f"Data for {date_iso} already processed. Exiting.")
+            return
+
     gauth = GoogleAuth(settings_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.yaml"))
     gauth.ServiceAuth()
     drive = GoogleDrive(gauth)
-
-
-
     hp = helper(logger)
 
-    # Meta file management
-    meta_file = os.path.join(DATA_DIR, "meta.csv")
-    dates, meta = get_target_dates(meta_file, lag_days=1) # originally lag_days = 1      ############# testing
-    logger.info(f"Found {len(dates)} dates to fetch.")
-
-    # Download and process missing dates
-    for target_date in tqdm(dates, desc="Processing Dates"):
-        date_iso = target_date.strftime("%Y-%m-%d") + f"T{t}:00:00"
-        pww_date = target_date.strftime("%Y-%m-%dT%HZ")
-        try:
-            # Download gribs data
-            H = FastHerbie(
-                [date_iso],
-                model="hrrr",
-                product=PRODUCT,
-                fxx=range(1, 49),    ############## originally (1,49) ############ testing
-                save_dir=GRIB_FOLDER,
-            )
-            H.download(REGEX)
-            #* load grib data to xarray dataset, and units conversion
-            ds = get_multiple_HRRR([date_iso], list(range(1, 49)), PRODUCT, REGEX, GRIB_FOLDER) # testing ########################
-            ds= hrrr_process(ds)
-
-            #* save xarray dataset to pww file
-            file_name = f"{pww_date}_{PRODUCT}_48_{STATE}.pww"
-            NC2PWW(ds, os.path.join(PWW_DAILY_FOLDER, file_name))
-            
-            
-            #TODO: uncomment docker volume mapper for network drive store
-
-            #* zip the file for upload
-            zip_file = os.path.join(ZIP_FOLDER, f"{pww_date}_{PRODUCT}_48_{STATE}.zip")
-            hp.zip_file(os.path.join(PWW_DAILY_FOLDER, file_name), zip_file, remove=False)
-
-            status = True
-            logger.info(f"Processed {file_name}")
-        except Exception as e:
-            logger.error(f"Failed to process {date_iso}: {e}")
-            status = False
-
-        # Update meta
-        meta = pd.concat(
-            [meta, pd.DataFrame({"date": [target_date], "status": [status]})],
-            ignore_index=True,
+    # Process single date
+    try:
+        # Download gribs data
+        H = FastHerbie(
+            [date_iso],
+            model="hrrr",
+            product=PRODUCT,
+            fxx=range(1, 49),
+            save_dir=GRIB_FOLDER,
         )
+        H.download(REGEX)
+        
+        # Process and save
+        ds = get_multiple_HRRR([date_iso], list(range(1, 49)), PRODUCT, REGEX, GRIB_FOLDER)
+        ds = hrrr_process(ds)
+
+        file_name = f"{pww_date}_{PRODUCT}_48_{STATE}.pww"
+        NC2PWW(ds, os.path.join(PWW_DAILY_FOLDER, file_name))
+        
+        zip_file = os.path.join(ZIP_FOLDER, f"{pww_date}_{PRODUCT}_48_{STATE}.zip")
+        hp.zip_file(os.path.join(PWW_DAILY_FOLDER, file_name), zip_file, remove=False)
+
+        logger.info(f"Processed {file_name}")
+        
+        # Upload to Google Drive
+        logger.info(f"Uploading {zip_file} to Google Drive...")
+        hp.upload_to_drive(drive, "1M6m4r7cfH6Vbg1yBP7P-b7IicUrfC6S_", zip_file)
+        
+        status = True
+    except Exception as e:
+        logger.error(f"Failed to process {date_iso}: {e}")
+        status = False
+
+    # Update meta
+    meta = pd.DataFrame({"date": [target_date], "status": [status]})
+    if os.path.exists(meta_file):
+        existing_meta = pd.read_csv(meta_file)
+        meta = pd.concat([existing_meta, meta], ignore_index=True)
         meta = meta.drop_duplicates(subset="date", keep="last")
-        meta.to_csv(meta_file, index=False)
+    meta.to_csv(meta_file, index=False)
 
-   # Current (commented out):
-# hp.upload_to_drive(drive, "DRIVE_FOLDER_ID", os.path.join(PWW_DAILY_FOLDER, "*.pww"))
 
-    # Change to:
-    logger.info(f"Uploading processed files to Google Drive...")
-    hp.upload_to_drive(drive, "1M6m4r7cfH6Vbg1yBP7P-b7IicUrfC6S_", os.path.join(ZIP_FOLDER, "*.zip"))
 
 if __name__ == "__main__":
     main()
