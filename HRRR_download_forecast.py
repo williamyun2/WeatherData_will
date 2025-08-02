@@ -12,7 +12,6 @@ import sys
 import time
 import logging
 from datetime import datetime, timedelta
-import regionmask
 
 import numpy as np
 import pandas as pd
@@ -128,56 +127,10 @@ def get_target_dates(meta_file, lag_days):
 # =========================
 
 
-def subset_to_texas(ds):
-    """
-    Subset xarray dataset to Texas boundaries using state shapefile.
-    """
-    import regionmask
-    
-    # Debug: print coordinate info
-    print(f"Dataset coordinates: {list(ds.coords)}")
-    print(f"Dataset dims: {list(ds.dims)}")
-    print(f"Longitude range: {ds.longitude.min().values} to {ds.longitude.max().values}")
-    print(f"Latitude range: {ds.latitude.min().values} to {ds.latitude.max().values}")
-    
-    # Convert longitude to -180 to 180 if needed (HRRR uses 0-360)
-    lon = ds.longitude
-    if lon.max() > 180:
-        lon = lon.where(lon <= 180, lon - 360)
-    
-    # Get US states from regionmask (uses Natural Earth data)
-    us_states = regionmask.defined_regions.natural_earth_v5_0_0.us_states_50
-    
-    # Create mask for Texas using corrected coordinates
-    try:
-        texas_mask = us_states.mask(lon, ds.latitude) == us_states.map_keys('TX')
-        print("Texas mask created successfully")
-    except Exception as e:
-        print(f"Error creating mask: {e}")
-        # Fallback: use bounding box method
-        print("Falling back to bounding box method...")
-        texas_bounds = {
-            'lat_min': 25.8, 'lat_max': 36.5,
-            'lon_min': -106.6, 'lon_max': -93.5
-        }
-        texas_mask = (
-            (ds.latitude >= texas_bounds['lat_min']) & 
-            (ds.latitude <= texas_bounds['lat_max']) &
-            (lon >= texas_bounds['lon_min']) & 
-            (lon <= texas_bounds['lon_max'])
-        )
-    
-    # Apply mask and crop to reduce file size
-    ds_texas = ds.where(texas_mask, drop=True)
-    
-    print(f"Original dataset shape: {ds.dims}")
-    print(f"Texas dataset shape: {ds_texas.dims}")
-    
-    return ds_texas
 
 
 def main():
-    """Main data fetching and processing routine - processes both TX and US."""
+    """Main data fetching and processing routine."""
     ensure_directories()
 
     # Get today's 12Z
@@ -191,24 +144,15 @@ def main():
     date_iso = target_date.strftime("%Y-%m-%dT12:00:00")
     pww_date = target_date.strftime("%Y-%m-%dT12Z")
 
-    logger.info(f"Preparing to download sfc data for {date_iso} - Processing both TX and US")
+    logger.info(f"Preparing to download {PRODUCT} data for {date_iso}")
 
-    # Check if already processed - SIMPLE VERSION
+    # Check if already processed
     meta_file = os.path.join(DATA_DIR, "meta.csv")
     if os.path.exists(meta_file):
         meta = pd.read_csv(meta_file)
         meta["date"] = pd.to_datetime(meta["date"])
-        
-        # Check if both TX and US are already processed for this date
-        tx_done = len(meta[(meta["date"] == target_date) & 
-                          (meta["region"] == "TX") & 
-                          (meta["status"] == True)]) > 0
-        us_done = len(meta[(meta["date"] == target_date) & 
-                          (meta["region"] == "US") & 
-                          (meta["status"] == True)]) > 0
-        
-        if tx_done and us_done:
-            logger.info(f"Data for {date_iso} already processed for both TX and US regions. Exiting.")
+        if target_date in meta[meta["status"] == True]["date"].values:
+            logger.info(f"Data for {date_iso} already processed. Exiting.")
             return
 
     gauth = GoogleAuth(settings_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.yaml"))
@@ -216,9 +160,9 @@ def main():
     drive = GoogleDrive(gauth)
     hp = helper(logger)
 
-    # Download data once
+    # Process single date
     try:
-        logger.info("Downloading GRIB data...")
+        # Download gribs data
         H = FastHerbie(
             [date_iso],
             model="hrrr",
@@ -228,86 +172,43 @@ def main():
         )
         H.download(REGEX)
         
-        # Get the raw dataset (full CONUS)
-        logger.info("Loading raw dataset...")
+        # Process and save
         ds = get_multiple_HRRR([date_iso], list(range(1, 49)), PRODUCT, REGEX, GRIB_FOLDER)
-        
-        # Define regions to process
-        regions = [
-            {
-                'name': 'TX',
-                'folder_id': '1Spsi9cgmqzX8WVS4uZ68Apq2r1x_Hg7g',  # Texas folder
-                'process_func': subset_to_texas  # Apply Texas subsetting
-            },
-            {
-                'name': 'US', 
-                'folder_id': '1M6m4r7cfH6Vbg1yBP7P-b7IicUrfC6S_',  # US folder
-                'process_func': lambda x: x      # No subsetting (full CONUS)
-            }
-        ]
-        
-        # Process each region
-        all_success = True
-        meta_entries = []
-        
-        for region in regions:
-            region_name = region['name']
-            try:
-                logger.info(f"Processing {region_name} data...")
-                
-                # Apply region-specific processing (subset or not)
-                ds_region = region['process_func'](ds.copy())
-                
-                # Apply HRRR processing (unit conversions, etc.)
-                ds_processed = hrrr_process(ds_region)
+        ds = hrrr_process(ds)
 
-                # Create PWW file
-                file_name = f"{pww_date}_{PRODUCT}_48_{region_name}.pww"
-                pww_path = os.path.join(PWW_DAILY_FOLDER, file_name)
-                NC2PWW(ds_processed, pww_path)
-                
-                # Create zip file
-                zip_file = os.path.join(ZIP_FOLDER, f"{pww_date}_{PRODUCT}_48_{region_name}.zip")
-                hp.zip_file(pww_path, zip_file, remove=False)
-
-                logger.info(f"Processed {file_name}")
-                
-                # Upload to Google Drive
-                logger.info(f"Uploading {region_name} data to Google Drive...")
-                hp.upload_to_drive(drive, region['folder_id'], zip_file)
-                
-                logger.info(f"✅ Successfully completed {region_name} processing")
-                meta_entries.append({"date": target_date, "status": True, "region": region_name})
-                
-            except Exception as e:
-                logger.error(f"❌ Failed to process {region_name}: {e}")
-                meta_entries.append({"date": target_date, "status": False, "region": region_name})
-                all_success = False
-
-        logger.info(f"Overall status: {'✅ Success' if all_success else '⚠️ Partial success'}")
+        file_name = f"{pww_date}_{PRODUCT}_48_{STATE}.pww"
+        NC2PWW(ds, os.path.join(PWW_DAILY_FOLDER, file_name))
         
+        zip_file = os.path.join(ZIP_FOLDER, f"{pww_date}_{PRODUCT}_48_{STATE}.zip")
+        hp.zip_file(os.path.join(PWW_DAILY_FOLDER, file_name), zip_file, remove=False)
+
+        logger.info(f"Processed {file_name}")
+        
+        # Upload to Google Drive
+        logger.info(f"Uploading {zip_file} to Google Drive...")
+        hp.upload_to_drive(drive, "1M6m4r7cfH6Vbg1yBP7P-b7IicUrfC6S_", zip_file)
+        
+        status = True
     except Exception as e:
-        logger.error(f"Failed to download/setup data for {date_iso}: {e}")
-        # Record failure for both regions
-        meta_entries = [
-            {"date": target_date, "status": False, "region": "TX"},
-            {"date": target_date, "status": False, "region": "US"}
-        ]
+        logger.error(f"Failed to process {date_iso}: {e}")
+        status = False
 
-    # Update meta file
-    if meta_entries:
-        new_meta = pd.DataFrame(meta_entries)
-        if os.path.exists(meta_file):
-            existing_meta = pd.read_csv(meta_file)
-            meta = pd.concat([existing_meta, new_meta], ignore_index=True)
-            meta = meta.drop_duplicates(subset=["date", "region"], keep="last")
-        else:
-            meta = new_meta
-        meta.to_csv(meta_file, index=False)
-        logger.info("Updated meta.csv with processing results")
+    # Update meta
+    meta = pd.DataFrame({"date": [target_date], "status": [status]})
+    if os.path.exists(meta_file):
+        existing_meta = pd.read_csv(meta_file)
+        meta = pd.concat([existing_meta, meta], ignore_index=True)
+        meta = meta.drop_duplicates(subset="date", keep="last")
+    meta.to_csv(meta_file, index=False)
 
 
 
-        
+
+
+
+
+
+
+
 if __name__ == "__main__":
     main()
