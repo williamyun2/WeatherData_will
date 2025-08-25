@@ -1,8 +1,33 @@
-# Ignore everything
-*
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
 
-# But not these files...
-!*.py
+# Data files
+*.pkl
+*.pickle
+*.parquet
+*.npy
+data/
 
-# Also allow .gitignore itself
-!.gitignore
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.swp
+*~

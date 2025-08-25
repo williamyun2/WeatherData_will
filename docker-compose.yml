@@ -1,0 +1,10 @@
+services:
+  service_hrrr_historical:
+    build: . 
+    image: twatlebob/hrrr_historical:latest2
+    container_name: container_hrrr_historical
+    environment:
+      TZ: ${TZ:-America/Chicago}
+    volumes:
+      - ${DATA_PATH:-./data}:/hrrr_historical/data
+    restart: unless-stopped
