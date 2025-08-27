@@ -254,7 +254,7 @@ def process_data(typ="1D",day=(datetime.datetime.now() - datetime.timedelta(days
     pattern = f"data/{typ}/{day}/*.parquet"
     print(f"Looking for files matching: {pattern}")
     files=glob.glob(pattern)
-    print(f"Found {len(files)} parquet files: {files}")
+    print(f"Found {len(files)} parquet files")
     if len(files)!=0:
         logger.info(f"Processing {len(files)} files, for {day}")
         print(f"Processing {len(files)} files, for {day}")
@@ -276,8 +276,71 @@ def process_data(typ="1D",day=(datetime.datetime.now() - datetime.timedelta(days
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def upload_to_drive(drive_service, folder_id, path):
-    """Upload the files to the google drive
+    """Upload the files to the google drive (FIXED VERSION with pagination)
     Args:
         drive_service: Google Drive API service object
         folder_id: str, the id of the folder to upload the files to
@@ -285,32 +348,56 @@ def upload_to_drive(drive_service, folder_id, path):
     """
     print(f"upload_to_drive called with folder_id={folder_id}, path={path}")
     try:
-        # List files in the folder (with Shared Drive support)
-        print("Getting list of files already in cloud...")
-        response = drive_service.files().list(
-            q=f"'{folder_id}' in parents and trashed=false",
-            supportsAllDrives=True,
-            includeItemsFromAllDrives=True
-        ).execute()
-        cloud_files = response.get('files', [])
+        # *** FIXED: Get ALL files from the folder with pagination ***
+        print("Getting complete list of files already in cloud...")
+        all_cloud_files = []
+        page_token = None
+        page_count = 0
         
-        cloud_files = [file["name"] for file in cloud_files]
-        print(f"Found {len(cloud_files)} files in cloud: {cloud_files}")
-        check = lambda file: file in cloud_files
+        while True:
+            page_count += 1
+            print(f"   Loading cloud files page {page_count}...")
+            
+            response = drive_service.files().list(
+                q=f"'{folder_id}' in parents and trashed=false",
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
+                fields="nextPageToken,files(name)",  # Only need filenames for comparison
+                pageSize=1000,  # Maximum page size
+                pageToken=page_token
+            ).execute()
+            
+            files = response.get('files', [])
+            all_cloud_files.extend(files)
+            print(f"      Got {len(files)} files on this page")
+            
+            page_token = response.get('nextPageToken')
+            if not page_token:
+                break
         
-        print(f"Looking for local files matching: {path}")
+        cloud_file_names = [file["name"] for file in all_cloud_files]
+        print(f"✅ Found {len(cloud_file_names)} total files in cloud")
+        
+        check = lambda file: file in cloud_file_names
+        
+        print(f"🔍 Looking for local files matching: {path}")
         files = glob.glob(path)
-        print(f"Found {len(files)} local files to upload: {files}")
+        print(f"📁 Found {len(files)} local files to upload")
+        
+        upload_count = 0
+        skip_count = 0
         
         for f in files:
             name = os.path.basename(f)
-            print(f"Checking file: {name}")
+            print(f"🔍 Checking file: {name}")
             if check(name):
                 logger.info(f"{name} already exists in the cloud.")
-                print(f"{name} already exists in the cloud.")
+                print(f"⏭️  {name} already exists in the cloud - skipping")
+                skip_count += 1
                 continue
-            logger.info(f"Uploading {name}  ...")
-            print(f"Uploading {name}  ...")
+                
+            logger.info(f"Uploading {name}...")
+            print(f"⬆️  Uploading {name}...")
             
             file_metadata = {
                 'name': name,
@@ -324,15 +411,72 @@ def upload_to_drive(drive_service, folder_id, path):
                 fields='id',
                 supportsAllDrives=True
             ).execute()
-            print(f"Successfully uploaded {name} with ID: {file.get('id')}")
+            print(f"✅ Successfully uploaded {name} with ID: {file.get('id')}")
+            upload_count += 1
+        
+        print(f"\n📊 UPLOAD SUMMARY:")
+        print(f"   ⬆️  Uploaded: {upload_count} files")
+        print(f"   ⏭️  Skipped: {skip_count} files (already exist)")
+        print(f"   📁 Total processed: {len(files)} files")
             
     except HttpError as error:
         logger.error(f"An error occurred during upload: {error}")
-        print(f"An error occurred during upload: {error}")
+        print(f"❌ An error occurred during upload: {error}")
     except Exception as e:
-        print(f"Unexpected error during upload: {e}")
+        print(f"❌ Unexpected error during upload: {e}")
         import traceback
         traceback.print_exc()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def process_past_files():
     """Process the files that are already downloaded"""
@@ -361,6 +505,7 @@ def process_past_files():
 
 @cronitor.job('fY3GQw')
 def main():
+    start_time = time.time()
     DEBUG = False  # set to true to run the script in debug mode
     check()  # check if the data folder exists
     
@@ -431,10 +576,13 @@ def main():
         upload_to_drive(drive_service, "1pItMc-ViWiRbY6G49sLlmP_0B5fRMh1W", "data/1D/*b3d")
         upload_to_drive(drive_service, "1JIOe_ANudOk2zW9v9LpSJ9UeKX-Zo4Ch", "data/3D/*b3d")    
 
-        print("Upload calls completed")
-        
+        elapsed_time = time.time() - start_time  # <--- End timing here
+        print(f"Script completed in {elapsed_time:.2f} seconds ⏱️")
+        print("Upload calls completed ✅✅✅")
         return f" completed! downloaded {num_1d} 1D files and {num_3d} 3D files, processed {num_1d_p} 1D files and {num_3d_p} 3D files"
     else:
+        elapsed_time = time.time() - start_time
+        print(f"Script completed in {elapsed_time:.2f} seconds ⏱️")
         print("Time condition not met - skipping processing")
         return f" completed! downloaded {num_1d} 1D files and {num_3d} 3D files"
 
