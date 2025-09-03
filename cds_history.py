@@ -77,7 +77,8 @@ def fetch_data(stime, etime, file_path):
                 "geopotential",
                 "10m_wind_gust_since_previous_post_processing",
             ],
-            "area": ["58", "-130", "24", "-60"],
+            # "area": ["58", "-130", "24", "-60"],
+            "area": ["23", "-161", "18", "-154"], # Hawaii
             "time": pd.date_range(stime, etime+timedelta(1), freq="h", normalize=True).strftime("%H:%M").unique().tolist(),  # normalize for each hours. add one day for 24 hours
             "day": pd.date_range(stime, etime, freq="h", inclusive="left").strftime("%d").unique().tolist(),  # don't include the last day which is new week
             "month": pd.date_range(stime, etime, freq="h").strftime("%m").unique().tolist(),
@@ -168,7 +169,7 @@ def NCtoPWW(df, nc_path):
 
     # * get the station data
     print(os.getcwd())
-    station = pd.read_parquet("station.parquet")  # station.parquet
+    station = pd.read_parquet("station_hawaii.parquet")  # station.parquet
     aMinLat = station.Latitude.min()
     aMaxLat = station.Latitude.max()
     aMinLon = station.Longitude.min()
@@ -280,8 +281,9 @@ def main():
     today = datetime.now()
     # * define the start and end time for the data to be fetched
     current_date = today - timedelta(days=5)  # give some time for the data to be ready on server
-    past_date = current_date - timedelta(weeks=5)  # get data for the last 4 weeks
+    past_date = current_date - timedelta(weeks=4)  # get data for the last 4 weeks
     dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
+    # dates = pd.to_datetime(["2025-01-02"])
     print(f"Fetching data from {past_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}")
 
 
@@ -343,25 +345,25 @@ def main():
 
     # * pack the data into each quarter
     #! need to consder the date the file is mssing after packing
-    ds, file_name = pack_quarter()
-    print(ds)
-    NCtoPWW(ds, f"{Data}/pww/quater/{file_name}.pww")
+    # ds, file_name = pack_quarter()
+    # print(ds)
+    # NCtoPWW(ds, f"{Data}/pww/quater/{file_name}.pww")
 
 
 
 
 
     # team overbye google drive
-    daily_folder_id = "1jN1NP3b5Nby-gpy5w1rqe2cgctESxqO-"
-    daily_archive_folder_id = "1QkSwW9eLtBjo0Q5ia8akZkMpqJuMivDp"
-    quarterly_folder_id = "12U8PNHHGIxCy8_GRzsF2KxZ4GneMWy6h"
+    # daily_folder_id = "1jN1NP3b5Nby-gpy5w1rqe2cgctESxqO-"
+    # daily_archive_folder_id = "1QkSwW9eLtBjo0Q5ia8akZkMpqJuMivDp"
+    # quarterly_folder_id = "12U8PNHHGIxCy8_GRzsF2KxZ4GneMWy6h"
 
 
         
     # # test folders
-    # daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
-    # daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
-    # quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
+    daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
+    daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
+    quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
 
 
 
