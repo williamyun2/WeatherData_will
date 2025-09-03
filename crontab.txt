@@ -1,2 +1,2 @@
 # runs at 12:01am daily
-28 11 * * * (cd /cds && /usr/local/bin/python cds_history.py) > /proc/1/fd/1 2>/proc/1/fd/2
+1 0 * * * (cd /cds && /usr/local/bin/python cds_history.py) > /proc/1/fd/1 2>/proc/1/fd/2
