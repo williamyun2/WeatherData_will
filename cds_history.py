@@ -55,10 +55,11 @@ logger = logging.getLogger("ERA_HISTORY")
 logging.getLogger('cdsapi').setLevel(logging.WARNING) # less verbose
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 
-
 def fetch_data(stime, etime, file_path, area=None):
     if area is None:
-        area = ["23", "-161", "18", "-154"]  # Default to Hawaii
+        raise ValueError("Area parameter is required. Please provide coordinates as a list: [North, West, South, East]\n"
+                        "Example: area=['23', '-161', '18', '-154'] for Hawaii\n"
+                        "Or use predefined areas: HAWAII, CONUS, TEXAS, CALIFORNIA")
     
     CDS.retrieve(
         "reanalysis-era5-single-levels",
@@ -415,21 +416,20 @@ def pack_quarter(target_date=None):
 
 
 
-
-
-
 def get_date_range(start_date=None, end_date=None):
-    """
-    Get date range for data fetching.
+    # Validate date types
+    if start_date is not None and not isinstance(start_date, datetime):
+        raise TypeError(f"start_date must be a datetime object, got {type(start_date)}.\n"
+                       "Example: datetime(2025, 8, 10)")
     
-    Args:
-        start_date: datetime or None. If None, uses default behavior (last 2 weeks)
-        end_date: datetime or None. If start_date provided but end_date is None, 
-                 fetches only the single start_date
+    if end_date is not None and not isinstance(end_date, datetime):
+        raise TypeError(f"end_date must be a datetime object, got {type(end_date)}.\n"
+                       "Example: datetime(2025, 8, 15)")
     
-    Returns:
-        pandas.DatetimeIndex: Range of dates to fetch
-    """
+    # Validate date logic
+    if start_date is not None and end_date is not None and end_date < start_date:
+        raise ValueError(f"end_date ({end_date.strftime('%Y-%m-%d')}) cannot be before start_date ({start_date.strftime('%Y-%m-%d')})")
+    
     if start_date is None:
         # Default behavior - last 2 weeks
         today = datetime.now()
@@ -444,7 +444,6 @@ def get_date_range(start_date=None, end_date=None):
         dates = pd.date_range(start_date, end_date, freq="D", inclusive="both", normalize=True)
     
     return dates
-
 
 def main(start_date=None, end_date=None, area=None):
     # * Check if the data folder exists, if not create it
@@ -570,6 +569,9 @@ def main(start_date=None, end_date=None, area=None):
     # logger.info(f"Uploading {file_name}.pww to the cloud")
     # # Upload the quarterly data, overwriting any existing file with the same name
     # hp.upload_to_drive(drive, quarterly_folder_id, f"{Data}/pww/quarter/*.pww", overwrite=True)
+
+
+
 
 
 
