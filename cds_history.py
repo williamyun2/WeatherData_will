@@ -52,14 +52,19 @@ DEBUG = False
 log_file = f"{Data}/download.log"
 logging.basicConfig(filename=log_file, level=logging.DEBUG if DEBUG else logging.INFO, format="{asctime} - {levelname} - {message}", style="{", datefmt="%Y-%m-%d %H:%M")
 logger = logging.getLogger("ERA_HISTORY")
-logging.getLogger('cdsapi').setLevel(logging.WARNING) # less verbose
-logging.getLogger('urllib3').setLevel(logging.WARNING)
+
+# Reduce verbosity
+logging.getLogger('cdsapi').setLevel(logging.ERROR)  # Changed from WARNING to ERROR
+logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('cdsapi.api').setLevel(logging.ERROR)  # Add this line
+
+
 
 def fetch_data(stime, etime, file_path, area=None):
     if area is None:
         raise ValueError("Area parameter is required. Please provide coordinates as a list: [North, West, South, East]\n"
                         "Example: area=['23', '-161', '18', '-154'] for Hawaii\n"
-                        "Or use predefined areas: HAWAII, CONUS, TEXAS, CALIFORNIA")
+                        "Or use predefined areas: HAWAII, CONUS, TEXAS, CALIFORNIA \n \n")
     
     CDS.retrieve(
         "reanalysis-era5-single-levels",
@@ -423,12 +428,12 @@ def get_date_range(start_date=None, end_date=None):
                        "Example: datetime(2025, 8, 10)")
     
     if end_date is not None and not isinstance(end_date, datetime):
-        raise TypeError(f"end_date must be a datetime object, got {type(end_date)}.\n"
+        raise TypeError(f"\n \n end_date must be a datetime object, got {type(end_date)}.\n"
                        "Example: datetime(2025, 8, 15)")
     
     # Validate date logic
     if start_date is not None and end_date is not None and end_date < start_date:
-        raise ValueError(f"end_date ({end_date.strftime('%Y-%m-%d')}) cannot be before start_date ({start_date.strftime('%Y-%m-%d')})")
+        raise ValueError(f"\n \n end_date ({end_date.strftime('%Y-%m-%d')}) cannot be before start_date ({start_date.strftime('%Y-%m-%d')}) \n \n ")
     
     if start_date is None:
         # Default behavior - last 2 weeks
@@ -523,7 +528,7 @@ def main(start_date=None, end_date=None, area=None):
             meta = pd.concat([meta, pd.DataFrame({"date": [d], "status": [False]})], ignore_index=True)
             meta = meta.drop_duplicates(subset="date", keep="last")
             meta.to_csv(f"{Data}/meta.csv", index=False)
-            print(f"Error in process data for {processing_date}, {e}") # <--- Update here as well
+            print(f"\n \n \n Error in process data for {processing_date}, {e}") # <--- Update here as well
 
     # * pack the data into each quarter
     #! need to consder the date the file is mssing after packing
@@ -538,7 +543,7 @@ def main(start_date=None, end_date=None, area=None):
         quarter_date = None
         
     ds, file_name = pack_quarter(quarter_date)
-    print(ds)
+    # print(ds)
     NCtoPWW(ds, f"{Data}/pww/quarter/{file_name}.pww")
 
     # team overbye google drive
@@ -595,7 +600,7 @@ if __name__ == "__main__":
     # main(start_date=datetime(2023, 7, 15), area=TEXAS)
 
     # Option 3: Date range with custom coordinates
-    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 8, 16), area=HAWAII)
+    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 8, 17), area=HAWAII)
     
     # Option 4: Custom coordinates 
     # main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 9, 6), 
