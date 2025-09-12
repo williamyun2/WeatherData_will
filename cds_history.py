@@ -600,7 +600,7 @@ if __name__ == "__main__":
     # main(start_date=datetime(2023, 7, 15), area=TEXAS)
 
     # Option 3: Date range with custom coordinates
-    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 8, 17), area=HAWAII)
+    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 8, 15), area=HAWAII)
     
     # Option 4: Custom coordinates 
     # main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 9, 6), 
