@@ -574,17 +574,12 @@ def main(start_date=None, end_date=None):
 
 
 
-
-
-
-if __name__ == "__main__":
-    # Examples of how to call:
-    
+if __name__ == "__main__":    
     # Option 1: Default behavior (last 2 weeks)
-    # main()
+    main()
     
     # Option 2: Single date
     # main(start_date=datetime(2023, 7, 15))
     
     # Option 3: Date range (e.g., entire August 2023)
-    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 9, 6))
+    # main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 9, 6))
