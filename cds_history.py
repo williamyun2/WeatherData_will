@@ -169,7 +169,7 @@ def NCtoPWW(df, nc_path):
 
     # * get the station data
     print(os.getcwd())
-    station = pd.read_parquet("station_hawaii.parquet")  # station.parquet
+    station = pd.read_parquet("station/hawaii_station.parquet")  # station.parquet
     aMinLat = station.Latitude.min()
     aMaxLat = station.Latitude.max()
     aMinLon = station.Longitude.min()
@@ -186,7 +186,7 @@ def NCtoPWW(df, nc_path):
     aPWWVersion = 1
     LOC_FC: int = 0  # for extra loc variables from table 1
     VARCOUNT: int = arr.shape[1]  # Set this to the number of weather variable types you have
-    sta = open("era5_station.pkl", "rb").read()
+    sta = open("station/hawaii_era5_station.pkl", "rb").read()
 
     with open(nc_path, "wb") as file:
         # ......... FILE HEADER .........#
@@ -220,12 +220,15 @@ def NCtoPWW(df, nc_path):
         # ......... DATA .........#
         file.write(arr.tobytes())
 
-
-def pack_quarter():
-    """'pack the data into each  quarter"""
-
-    today = datetime.now() - timedelta(days=7)  # have some delay for the time to download the data and be ready for processing
+def pack_quarter(target_date=None):
+    if target_date is None:
+        today = datetime.now() - timedelta(days=7)
+    else:
+        today = target_date
+    
     quarter = (today.month - 1) // 3 + 1
+
+
     print(f"Current Quarter: {quarter}")
     quarter_lookup = {  # not sure if there is a better way to do this, this is robust for leap year
         1: [datetime(today.year, 1, 1), datetime(today.year, 3, 31)],
@@ -264,7 +267,7 @@ def pack_quarter():
     ds = xr.concat(ncs, dim="valid_time")
     ds = ds.dropna("valid_time", how="all")
     ds = ds.drop_duplicates("valid_time")
-    file_name = f"NorthAmerican{quarter_start.year}_Q{quarter}"
+    file_name = f"Hawaii{quarter_start.year}_Q{quarter}"
     return ds, file_name
 
 
@@ -280,10 +283,17 @@ def main():
 
     today = datetime.now()
     # * define the start and end time for the data to be fetched
-    current_date = today - timedelta(days=5)  # give some time for the data to be ready on server
-    past_date = current_date - timedelta(weeks=4)  # get data for the last 4 weeks
+    # current_date = today - timedelta(days=5)  # give some time for the data to be ready on server
+    # past_date = current_date - timedelta(weeks=4)  # get data for the last 4 weeks
+    # dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
+
+
+    # For July 2023 data
+    past_date = datetime(2023, 7, 1)  # July 1, 2023
+    current_date = datetime(2023, 8, 1)  # August 1, 2023 (end of July)
     dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
-    # dates = pd.to_datetime(["2025-01-02"])
+
+
     print(f"Fetching data from {past_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}")
 
 
@@ -346,8 +356,10 @@ def main():
     # * pack the data into each quarter
     #! need to consder the date the file is mssing after packing
     # ds, file_name = pack_quarter()
-    # print(ds)
-    # NCtoPWW(ds, f"{Data}/pww/quater/{file_name}.pww")
+    ds, file_name = pack_quarter(datetime(2023, 7, 15))  # Any date in July 2023
+
+    print(ds)
+    NCtoPWW(ds, f"{Data}/pww/quater/{file_name}.pww")
 
 
 
@@ -360,14 +372,16 @@ def main():
 
 
         
-    # # test folders
-    daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
-    daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
-    quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
+    # # test folders cds 
+    # daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
+    # daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
+    # quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
 
+# hawaii
 
-
-
+    daily_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
+    daily_archive_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
+    quarterly_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
 
 
 
