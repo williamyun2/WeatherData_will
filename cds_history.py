@@ -52,9 +52,14 @@ DEBUG = False
 log_file = f"{Data}/download.log"
 logging.basicConfig(filename=log_file, level=logging.DEBUG if DEBUG else logging.INFO, format="{asctime} - {levelname} - {message}", style="{", datefmt="%Y-%m-%d %H:%M")
 logger = logging.getLogger("ERA_HISTORY")
+logging.getLogger('cdsapi').setLevel(logging.WARNING) # less verbose
+logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 
-def fetch_data(stime, etime, file_path):
+def fetch_data(stime, etime, file_path, area=None):
+    if area is None:
+        area = ["23", "-161", "18", "-154"]  # Default to Hawaii
+    
     CDS.retrieve(
         "reanalysis-era5-single-levels",
         {
@@ -77,10 +82,9 @@ def fetch_data(stime, etime, file_path):
                 "geopotential",
                 "10m_wind_gust_since_previous_post_processing",
             ],
-            # "area": ["58", "-130", "24", "-60"],
-            "area": ["23", "-161", "18", "-154"], # Hawaii
-            "time": pd.date_range(stime, etime+timedelta(1), freq="h", normalize=True).strftime("%H:%M").unique().tolist(),  # normalize for each hours. add one day for 24 hours
-            "day": pd.date_range(stime, etime, freq="h", inclusive="left").strftime("%d").unique().tolist(),  # don't include the last day which is new week
+            "area": area,  # Use the passed area
+            "time": pd.date_range(stime, etime+timedelta(1), freq="h", normalize=True).strftime("%H:%M").unique().tolist(),
+            "day": pd.date_range(stime, etime, freq="h", inclusive="both").strftime("%d").unique().tolist(),
             "month": pd.date_range(stime, etime, freq="h").strftime("%m").unique().tolist(),
             "year": pd.date_range(stime, etime, freq="h").strftime("%Y").unique().tolist(),
         },
@@ -431,18 +435,18 @@ def get_date_range(start_date=None, end_date=None):
         today = datetime.now()
         current_date = today - timedelta(days=5)
         past_date = current_date - timedelta(weeks=2)
-        dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
+        dates = pd.date_range(past_date, current_date, freq="D", inclusive="both", normalize=True)
     elif end_date is None:
         # Single date
         dates = pd.date_range(start_date, start_date, freq="D", normalize=True)
     else:
         # Date range
-        dates = pd.date_range(start_date, end_date, freq="D", inclusive="left", normalize=True)
+        dates = pd.date_range(start_date, end_date, freq="D", inclusive="both", normalize=True)
     
     return dates
 
 
-def main(start_date=None, end_date=None):
+def main(start_date=None, end_date=None, area=None):
     # * Check if the data folder exists, if not create it
     check = lambda p: os.makedirs(p, exist_ok=True)
     check(f"{Data}/nc/")
@@ -492,12 +496,12 @@ def main(start_date=None, end_date=None):
             
             if os.path.exists(nc_folder_path) and os.path.exists(zip_file_path):
                 # Data already exists, just process it
-                print(f"Data for {processing_date} already exists locally, processing...")
+                # print(f"Data for {processing_date} already exists locally, processing...")
                 ds = zip_to_nc(zip_file_path, nc_folder_path)
             else:
                 # Need to download data
-                print(f"Downloading data for {processing_date}...")
-                fetch_data(processing_date, processing_date, zip_file_path)
+                # print(f"Downloading data for {processing_date}...")
+                fetch_data(processing_date, processing_date, zip_file_path, area=area)  # Pass area here
                 check(nc_folder_path)
                 ds = zip_to_nc(zip_file_path, nc_folder_path)
             
@@ -514,7 +518,7 @@ def main(start_date=None, end_date=None):
                 meta = pd.concat([meta, pd.DataFrame({"date": [d], "status": [True]})], ignore_index=True)
                 meta = meta.drop_duplicates(subset="date", keep="last")
                 meta.to_csv(f"{Data}/meta.csv", index=False)
-                print(f"Data for {processing_date} have been successfully processed")
+                # print(f"Data for {processing_date} have been successfully processed")
         except Exception as e:
             # Update meta immediately for failed processing
             meta = pd.concat([meta, pd.DataFrame({"date": [d], "status": [False]})], ignore_index=True)
@@ -549,12 +553,12 @@ def main(start_date=None, end_date=None):
     # daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
     # quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
 
-# hawaii
+    # hawaii
     # daily_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
     # daily_archive_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
     # quarterly_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
 
-    # # Before archiving, upload only truly new files
+    # Before archiving, upload only truly new files
     # logger.info("Uploading daily .pww files to the cloud")
     # hp.upload_to_drive(drive, daily_folder_id, f"{Data}/pww/daily/*.pww", overwrite=False,
     #     archive_folder_id=daily_archive_folder_id  # Add this!
@@ -566,7 +570,6 @@ def main(start_date=None, end_date=None):
     # logger.info(f"Uploading {file_name}.pww to the cloud")
     # # Upload the quarterly data, overwriting any existing file with the same name
     # hp.upload_to_drive(drive, quarterly_folder_id, f"{Data}/pww/quarter/*.pww", overwrite=True)
-    # ********************* MODIFIED SECTION END *********************
 
 
 
@@ -576,15 +579,25 @@ def main(start_date=None, end_date=None):
 
 
 
-
+# Now you can specify coordinates right here at the bottom!
 if __name__ == "__main__":
+    # Common coordinate sets for easy copy/paste:
+    HAWAII = ["23", "-161", "18", "-154"]
+    CONUS = ["58", "-130", "24", "-60"]  # Continental US
+    TEXAS = ["37", "-107", "25", "-93"]
+    CALIFORNIA = ["42", "-125", "32", "-114"]
+    
     # Examples of how to call:
     
-    # Option 1: Default behavior (last 2 weeks)
-    # main()
+   # Option 1: Default behavior (Hawaii, last 2 weeks)  
+    # main(area=HAWAII)
+
+    # Option 2: Single date with custom area
+    # main(start_date=datetime(2023, 7, 15), area=TEXAS)
+
+    # Option 3: Date range with custom coordinates
+    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 8, 16), area=HAWAII)
     
-    # Option 2: Single date
-    # main(start_date=datetime(2023, 7, 15))
-    
-    # Option 3: Date range (e.g., entire August 2023)
-    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 9, 6))
+    # Option 4: Custom coordinates 
+    # main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 9, 6), 
+    #      area=["30", "-100", "25", "-95"])  # CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, 
