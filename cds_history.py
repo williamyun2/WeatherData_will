@@ -576,9 +576,6 @@ def main(start_date=None, end_date=None, area=None):
 
 
 
-
-
-
 # Now you can specify coordinates right here at the bottom!
 if __name__ == "__main__":
     # Common coordinate sets for easy copy/paste:
