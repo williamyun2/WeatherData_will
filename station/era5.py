@@ -1,3 +1,15 @@
+# OUTPUT IS PKL
+# # OUTPUT IS PKL
+# # OUTPUT IS PKL
+# # OUTPUT IS PKL
+# # OUTPUT IS PKL
+# # OUTPUT IS PKL
+# # OUTPUT IS PKL
+# # OUTPUT IS PKL
+# # OUTPUT IS PKL
+
+
+
 import pandas as pd
 import struct
 from typing import Callable
@@ -12,7 +24,7 @@ def to_str(x, lens) -> str:
 
 # Load station data
 # station = pd.read_parquet("station_clean.parquet")
-station = pd.read_parquet("station_hawaii.parquet")
+station = pd.read_parquet("hawaii_station.parquet")
 
 # Clean and prepare station data
 station['Region'] = station['Region'].fillna('')
@@ -38,7 +50,7 @@ station.sort_values(by=["Latitude", "Longitude"], inplace=True)
 station = station.astype({"Latitude": "double", "Longitude": "double", "ElevationMeters": "int16"})
 
 # Write binary station file
-with open("era5_station.pkl", "wb") as file:
+with open("hawaii_era5_station.pkl", "wb") as file:
     for row in station.index:
         file.write(struct.pack('<d', station['Latitude'][row]))          # Write Latitude (DOUBLE)
         file.write(struct.pack('<d', station['Longitude'][row]))         # Write Longitude (DOUBLE)
@@ -50,3 +62,8 @@ with open("era5_station.pkl", "wb") as file:
 print(f"Successfully created era5_station.pkl with {len(station)} stations")
 print("First few stations:")
 print(station[['Latitude', 'Longitude', 'ElevationMeters', 'WhoAmI']].head())
+
+
+
+
+# OUTPUT IS PKL

@@ -6,20 +6,20 @@ c.retrieve(
     "reanalysis-era5-single-levels",
     {
         "product_type": "reanalysis",
-        "variable": ["geopotential"],   # static orography proxy
-        "year": "2024",                 # any year works; field is static
-        "month": "01",
+        "variable": ["geopotential"],
+        "year": "2024",
+        "month": "01", 
         "day": "01",
         "time": "00:00",
-        "grid": [0.25, 0.25],           # 0.25° to match your grid
-        "area": [23, -161, 18, -154],   # N, W, S, E (lat/lat lon/lon)
-        "format": "grib",
+        "grid": [0.25, 0.25],
+        "area": [23, -161, 18, -154],
+        "format": "netcdf",  # Changed from "grib"
     },
-    "hawaii_orog.grib",
+    "hawaii_orog.nc",  # Changed extension
 )
 
-# Load and convert to meters
-ds = xr.open_dataset("hawaii_orog.grib", engine="cfgrib")
+# Then open with standard netcdf4 engine
+ds = xr.open_dataset("hawaii_orog.nc", engine="netcdf4")
 orog_m = ds["z"] / 9.80665  # 'z' is geopotential in m^2/s^2
 
 # Build a tidy dataframe with only the required columns
