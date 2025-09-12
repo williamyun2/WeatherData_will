@@ -7,7 +7,7 @@ Run this:
 python cds_auto.py
 ```
 
-It does everything instead of `run1_download_nc.py`, `run2_nc_to_station.py`, `run3_station_pkl.py`, and `cds_history.py`.
+It does everything instead of having to run these separately:`run1_download_nc.py`, `run2_nc_to_station.py`, `run3_station_pkl.py`, and `cds_history.py`.
 
 ## What It Does
 
