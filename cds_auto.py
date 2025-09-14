@@ -93,8 +93,8 @@ def generate_station_data(area, region_name="region"):
     
     # Step 2: Convert NC to station parquet
     print("🔄 Converting to station data...")
-    df = xr.open_dataset(nc_file, engine="netcdf4")
-    df = df.to_dataframe()
+    with xr.open_dataset(nc_file, engine="netcdf4") as ds:
+        df = ds.to_dataframe().reset_index()
     df.reset_index(inplace=True)
     
     # Create station identifiers
@@ -176,7 +176,10 @@ def fetch_data(stime, etime, file_path, area=None):
         raise ValueError("Area parameter is required. Please provide coordinates as a list: [North, West, South, East]\n"
                         "Example: area=['23', '-161', '18', '-154'] for Hawaii\n"
                         "Or use predefined areas: HAWAII, CONUS, TEXAS, CALIFORNIA \n \n")
-    
+    if os.path.exists(file_path):
+        print(f"✅ Using existing file {file_path}, skipping download")
+        return
+
     CDS.retrieve(
         "reanalysis-era5-single-levels",
         {
@@ -536,7 +539,7 @@ def main(start_date=None, end_date=None, area=None, region_name="region"):
     print(f"🎉 Pipeline completed successfully!")
 
 # =============================================================================
-# 🎯 EASY CONFIGURATION SECTION - JUST CHANGE THESE 3 VALUES!
+# 🎯 EASY CONFIGURATION SECTION - JUST CHANGE THESE VALUES!
 # =============================================================================
 
 if __name__ == "__main__":
@@ -548,21 +551,21 @@ if __name__ == "__main__":
     FLORIDA = ["31", "-87", "24", "-80"]
     NORTHEAST = ["48", "-80", "40", "-66"]
     
-    # 🔧 CHANGE THESE 3 SETTINGS:
+    # 🔧 CHANGE THESE SETTINGS:
     AREA = HAWAII                           # ← Change this to your desired area
-    START_DATE = datetime(2025, 8, 10)      # ← Change start date  
-    END_DATE = datetime(2025, 8, 15)        # ← Change end date
-    # Region name is automatically detected from AREA! 🎯
+    REGION_NAME = "hawaii"                  # ← Change this to match your region
+    START_DATE = datetime(2025, 8, 1)      # ← Change start date
+    END_DATE = datetime(2025, 8, 31)        # ← Change end date
     
     # 🚀 RUN THE COMPLETE PIPELINE:
     main(
         start_date=START_DATE,
         end_date=END_DATE, 
-        area=AREA
-        # region_name automatically generated! 
+        area=AREA,
+        region_name=REGION_NAME
     )
     
-    # Other examples - region names auto-detected:
-    # main(area=CALIFORNIA)                                    # → "california" 
-    # main(start_date=datetime(2025, 9, 1), area=TEXAS)       # → "texas"
-    # main(area=["30", "-100", "25", "-95"])                  # → "region_30N_100W_25S_95E"
+    # Other examples:
+    # main(area=CALIFORNIA, region_name="california")  # Default dates (last 2 weeks)
+    # main(start_date=datetime(2025, 9, 1), area=TEXAS, region_name="texas")  # Single date
+    # main(area=["30", "-100", "25", "-95"], region_name="custom")  # Custom coordinates
