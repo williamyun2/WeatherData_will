@@ -553,7 +553,7 @@ if __name__ == "__main__":
     
     # 🔧 CHANGE THESE SETTINGS:
     AREA = HAWAII                           # ← Change this to your desired area
-    REGION_NAME = "hawaii"                  # ← Change this to match your region
+    REGION_NAME = "hawaii"                  # ← station and nc file name identifier
     START_DATE = datetime(2025, 8, 1)      # ← Change start date
     END_DATE = datetime(2025, 8, 31)        # ← Change end date
     
