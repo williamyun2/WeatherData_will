@@ -126,24 +126,75 @@ def generate_station_data(area, region_name="region"):
     
     return station_parquet
 
+# def generate_station_pkl(parquet_file, region_name):
+#     """Generate the binary PKL station file"""
+#     from typing import Callable
+    
+#     # Load station data
+#     station = pd.read_parquet(parquet_file)
+    
+#     # Clean and prepare station data
+#     station['Region'] = station['Region'].fillna('')
+#     station['Country2'] = station['Country2'].fillna('')
+#     station['ElevationMeters'] = station['ElevationMeters'].astype(int)
+#     station['Region'] = station['Region'].astype(str)
+#     station['Country2'] = station['Country2'].astype(str)
+#     station.reset_index(inplace=True)
+    
+#     # Create station identifier
+#     station['WhoAmI'] = '+' + station['Latitude'].apply(to_str, args=(5,)) + station['Longitude'].apply(to_str, args=(6,)) + '/'
+#     station['WhoAmI'].drop_duplicates(inplace=True)
+#     station.sort_values(by=["Latitude", "Longitude"], inplace=True)
+    
+#     # Create null-terminated strings for binary format
+#     to_cstring: Callable[[str], str] = lambda s: s.encode('ascii', 'replace') + b'\x00'
+#     station['ascii_null_terminated_WhoAmI'] = station['WhoAmI'].apply(to_cstring)   
+#     station['ascii_null_terminated_Region'] = station['Region'].apply(to_cstring) 
+#     station['ascii_null_terminated_Country2'] = station['Country2'].apply(to_cstring)
+    
+#     # Final sort and type conversion
+#     station.sort_values(by=["Latitude", "Longitude"], inplace=True)
+#     station = station.astype({"Latitude": "double", "Longitude": "double", "ElevationMeters": "int16"})
+    
+#     # Write binary station file
+#     pkl_file = f"station/{region_name}_era5_station.pkl"
+#     with open(pkl_file, "wb") as file:
+#         for row in station.index:
+#             file.write(struct.pack('<d', station['Latitude'][row]))          # Write Latitude (DOUBLE)
+#             file.write(struct.pack('<d', station['Longitude'][row]))         # Write Longitude (DOUBLE)
+#             file.write(struct.pack('<h', station['ElevationMeters'][row]))   # Write AltitudeM (INT16)
+#             file.write(station['ascii_null_terminated_WhoAmI'][row])         # Write Name (CSTRING)
+#             file.write(station['ascii_null_terminated_Country2'][row])       # Write Country (CSTRING)
+#             file.write(station['ascii_null_terminated_Region'][row])         # Write Region (CSTRING)
+    
+#     print(f"✅ Created {pkl_file} with {len(station)} stations")
+#     print("First few stations:")
+#     print(station[['Latitude', 'Longitude', 'ElevationMeters', 'WhoAmI']].head())
+
+
+
 def generate_station_pkl(parquet_file, region_name):
-    """Generate the binary PKL station file"""
+    """Generate the binary PKL station file - FIXED VERSION"""
     from typing import Callable
     
     # Load station data
     station = pd.read_parquet(parquet_file)
     
-    # Clean and prepare station data
+    # Clean and prepare station data - EXACT ORDER FROM WORKING NOTEBOOK
     station['Region'] = station['Region'].fillna('')
     station['Country2'] = station['Country2'].fillna('')
     station['ElevationMeters'] = station['ElevationMeters'].astype(int)
     station['Region'] = station['Region'].astype(str)
     station['Country2'] = station['Country2'].astype(str)
+    
+    # ⭐ CRITICAL: Reset index BEFORE creating WhoAmI
     station.reset_index(inplace=True)
     
     # Create station identifier
     station['WhoAmI'] = '+' + station['Latitude'].apply(to_str, args=(5,)) + station['Longitude'].apply(to_str, args=(6,)) + '/'
     station['WhoAmI'].drop_duplicates(inplace=True)
+    
+    # ⭐ CRITICAL: Sort AFTER creating WhoAmI
     station.sort_values(by=["Latitude", "Longitude"], inplace=True)
     
     # Create null-terminated strings for binary format
@@ -152,8 +203,10 @@ def generate_station_pkl(parquet_file, region_name):
     station['ascii_null_terminated_Region'] = station['Region'].apply(to_cstring) 
     station['ascii_null_terminated_Country2'] = station['Country2'].apply(to_cstring)
     
-    # Final sort and type conversion
+    # ⭐ CRITICAL: Sort again before writing (working notebook does this twice)
     station.sort_values(by=["Latitude", "Longitude"], inplace=True)
+    
+    # ⭐ CRITICAL: Type conversion happens BEFORE writing but AFTER sorting
     station = station.astype({"Latitude": "double", "Longitude": "double", "ElevationMeters": "int16"})
     
     # Write binary station file
@@ -170,6 +223,9 @@ def generate_station_pkl(parquet_file, region_name):
     print(f"✅ Created {pkl_file} with {len(station)} stations")
     print("First few stations:")
     print(station[['Latitude', 'Longitude', 'ElevationMeters', 'WhoAmI']].head())
+
+
+
 
 def fetch_data(stime, etime, file_path, area=None):
     if area is None:
@@ -544,28 +600,49 @@ def main(start_date=None, end_date=None, area=None, region_name="region"):
 
 if __name__ == "__main__":
     # Predefined coordinate sets for easy copy/paste:
-    HAWAII = ["23", "-161", "18", "-154"]
-    CONUS = ["58", "-130", "24", "-60"]  # Continental US
-    TEXAS = ["37", "-107", "25", "-93"]
-    CALIFORNIA = ["42", "-125", "32", "-114"]
-    FLORIDA = ["31", "-87", "24", "-80"]
-    NORTHEAST = ["48", "-80", "40", "-66"]
+    # HAWAII = ["23", "-161", "18", "-154"]
+    # CONUS = ["58", "-130", "24", "-60"]  # Continental US
+    # TEXAS = ["37", "-107", "25", "-93"]
+    # CALIFORNIA = ["42", "-125", "32", "-114"]
+    # FLORIDA = ["31", "-87", "24", "-80"]
+    # NORTHEAST = ["48", "-80", "40", "-66"]
     
-    # 🔧 CHANGE THESE SETTINGS:
-    AREA = HAWAII                           # ← Change this to your desired area
-    REGION_NAME = "hawaii"                  # ← station and nc file name identifier
-    START_DATE = datetime(2025, 8, 1)      # ← Change start date
-    END_DATE = datetime(2025, 8, 31)        # ← Change end date
+    # # 🔧 CHANGE THESE SETTINGS:
+    # AREA = CONUS                           # ← Change this to your desired area
+    # REGION_NAME = "CONUS"                  # ← station and nc file name identifier
     
-    # 🚀 RUN THE COMPLETE PIPELINE:
-    main(
-        start_date=START_DATE,
-        end_date=END_DATE, 
-        area=AREA,
-        region_name=REGION_NAME
-    )
+    # # 🚀 RUN THE COMPLETE PIPELINE:
+    # main(
+    #     start_date=START_DATE,
+    #     end_date=END_DATE, 
+    #     area=AREA,
+    #     region_name=REGION_NAME
+    # )
     
     # Other examples:
     # main(area=CALIFORNIA, region_name="california")  # Default dates (last 2 weeks)
     # main(start_date=datetime(2025, 9, 1), area=TEXAS, region_name="texas")  # Single date
     # main(area=["30", "-100", "25", "-95"], region_name="custom")  # Custom coordinates
+
+
+
+
+    REGIONS = {
+        "CONUS": ["58", "-130", "24", "-60"],
+        "HAWAII": ["23", "-161", "18", "-154"],
+        "TEXAS": ["37", "-107", "25", "-93"],
+        "CALIFORNIA": ["42", "-125", "32", "-114"],
+    }
+
+    # Change only this one line:
+    SELECTED_REGION = "HAWAII"
+    START_DATE = datetime(2020, 1, 1)      # ← Change start date. example: 2025/07/01 is (2025, 7, 1)
+    END_DATE = datetime(2025, 9, 30)        # ← Change end date. gota be 6 days before current date.
+
+    # Then use:
+    main(
+        start_date=START_DATE,
+        end_date=END_DATE,
+        area=REGIONS[SELECTED_REGION],
+        region_name=SELECTED_REGION
+    )
