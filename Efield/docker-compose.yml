@@ -1,0 +1,28 @@
+# version: "3.9"
+
+# services:
+#   service_efield:
+#     build: .                              # Build from your Dockerfile
+#     image: image_efield:latest               # Tag it with your own name
+#     container_name: container_efield
+#     environment:
+#       TZ: America/Chicago
+#     working_dir: /efield                # Match your Dockerfile's WORKDIR
+#     volumes:
+#       - volume_noaa_data:/efield/data
+#     restart: unless-stopped
+
+# volumes:
+#   volume_noaa_data:
+#     driver: local
+
+
+
+
+services:
+  service_efield:
+    build: .
+    image: twatlebob/efield:latest4  # Tag for Docker Hub
+    container_name: container_efield
+
+# dogshit method of building on personal laptop then docker-compose on target to E drive.
