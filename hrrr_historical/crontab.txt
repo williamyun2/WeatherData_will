@@ -1,0 +1,1 @@
+0 12 * * * (cd /hrrr_historical && /usr/local/bin/python hrrr_historical.py) > /proc/1/fd/1 2>/proc/1/fd/2

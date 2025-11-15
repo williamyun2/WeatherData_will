@@ -1,0 +1,17 @@
+pandas
+numpy
+matplotlib
+dask
+netCDF4
+bottleneck
+fastparquet
+xarray
+rioxarray
+geopandas
+herbie-data
+cfgrib
+plotly
+PyDrive2
+cartopy
+requests
+tqdm
