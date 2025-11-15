@@ -1,0 +1,14 @@
+pandas
+numpy
+cfgrib
+dask
+netCDF4
+bottleneck
+fastparquet
+xarray
+PyDrive2
+cronitor
+cartopy
+tqdm
+ecmwflibs 
+psutil

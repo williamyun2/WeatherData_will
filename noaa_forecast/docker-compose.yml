@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  service_noaa:
+    build: .                              # Build from your Dockerfile
+    image: image_noaa:latest               # Tag it with your own name
+    container_name: container_noaa
+    environment:
+      TZ: America/Chicago
+    working_dir: /noaa                    # Match your Dockerfile's WORKDIR
+    volumes:
+      - volume_noaa_data:/noaa/data
+    restart: unless-stopped
+
+volumes:
+  volume_noaa_data:
+    driver: local
