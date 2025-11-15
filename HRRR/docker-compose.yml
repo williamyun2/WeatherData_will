@@ -1,0 +1,16 @@
+
+services:
+  service_hrrr:
+    build: .                      # Build from your Dockerfile
+    image: image_hrrr:latest           # Tag it with your own name
+    container_name: container_hrrr
+    environment:
+      TZ: America/Chicago
+    working_dir: /hrrr           # Match your Dockerfile's WORKDIR
+    volumes:
+      - volume_data:/hrrr/data
+    restart: unless-stopped
+
+volumes:
+  volume_data:
+    driver: local
