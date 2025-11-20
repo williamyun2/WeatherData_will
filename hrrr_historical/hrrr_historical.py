@@ -34,14 +34,14 @@ HISTORICAL_ZIP_FOLDER = os.path.join(DATA_DIR, "historical_zip")
 GRIB_FOLDER = os.path.join(DATA_DIR, "grib")
 
 # PRODUCTION PRODUCTION PRODUCTION PRODUCTION PRODUCTION PRODUCTION PRODUCTION 
-# # DAILY_DRIVE_FOLDER_ID = "1Uc-tuSPEnh7rJzC3nFvxndFvULrsNe-U"
-# MONTHLY_DRIVE_FOLDER_ID = "1_govjuY2WV0TqHp_7PwVVtrGPCDU-I9v"
-# ARCHIVE_DRIVE_FOLDER_ID = "1yH-PC52yq2GFsymW5mdENTcsMvu27U0E"
+DAILY_DRIVE_FOLDER_ID = "1Uc-tuSPEnh7rJzC3nFvxndFvULrsNe-U"
+MONTHLY_DRIVE_FOLDER_ID = "1_govjuY2WV0TqHp_7PwVVtrGPCDU-I9v"
+ARCHIVE_DRIVE_FOLDER_ID = "1yH-PC52yq2GFsymW5mdENTcsMvu27U0E"
 
 # PERSONAL TEST FOLDERS
-DAILY_DRIVE_FOLDER_ID = "1tiKQf168JP36Mfjh0tHmRhDmQde03MJg"      
-MONTHLY_DRIVE_FOLDER_ID = "1Ob8z9gX9Btvs5K178LxrIYXciMDIzB9s"    
-ARCHIVE_DRIVE_FOLDER_ID = "1f-8gcb0T5TRfdRJVh_PPkYhtY2DLk15b"   
+# DAILY_DRIVE_FOLDER_ID = "1tiKQf168JP36Mfjh0tHmRhDmQde03MJg"      
+# MONTHLY_DRIVE_FOLDER_ID = "1Ob8z9gX9Btvs5K178LxrIYXciMDIzB9s"    
+# ARCHIVE_DRIVE_FOLDER_ID = "1f-8gcb0T5TRfdRJVh_PPkYhtY2DLk15b"   
 
 # =========================
 # Logging Setup
@@ -323,7 +323,7 @@ def manual_processing():
     # process_one_day("2025-08-13", fxx, product, regex, state, drive, hp)
     
     # OPTION 2: Process exactly 1 month (all hours in month) - UPLOADS TO MONTHLY FOLDER AUTOMATICALLY
-    process_one_month("2025-01-01", fxx, product, regex, state, drive, hp)
+    process_one_month("2025-10-01", fxx, product, regex, state, drive, hp)
     
     # OPTION 3: Process a range of days - UPLOADS TO DAILY FOLDER AUTOMATICALLY
     # process_date_range_with_cleanup("2025-07-01", "2025-08-12", fxx, product, regex, state, drive, hp, mode="day")
