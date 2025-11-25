@@ -635,9 +635,9 @@ if __name__ == "__main__":
     }
 
     # Change only this one line:
-    SELECTED_REGION = "HAWAII"
-    START_DATE = datetime(2020, 1, 1)      # ← Change start date. example: 2025/07/01 is (2025, 7, 1)
-    END_DATE = datetime(2025, 9, 30)        # ← Change end date. gota be 6 days before current date.
+    SELECTED_REGION = "CONUS"
+    # START_DATE = datetime(2020, 1, 1)      # ← Change start date. example: 2025/07/01 is (2025, 7, 1)
+    # END_DATE = datetime(2025, 9, 30)        # ← Change end date. gota be 6 days before current date.
 
     # Then use:
     main(

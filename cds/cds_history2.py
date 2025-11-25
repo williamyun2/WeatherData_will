@@ -53,19 +53,8 @@ log_file = f"{Data}/download.log"
 logging.basicConfig(filename=log_file, level=logging.DEBUG if DEBUG else logging.INFO, format="{asctime} - {levelname} - {message}", style="{", datefmt="%Y-%m-%d %H:%M")
 logger = logging.getLogger("ERA_HISTORY")
 
-# Reduce verbosity
-logging.getLogger('cdsapi').setLevel(logging.ERROR)  # Changed from WARNING to ERROR
-logging.getLogger('urllib3').setLevel(logging.ERROR)
-logging.getLogger('cdsapi.api').setLevel(logging.ERROR)  # Add this line
 
-
-
-def fetch_data(stime, etime, file_path, area=None):
-    if area is None:
-        raise ValueError("Area parameter is required. Please provide coordinates as a list: [North, West, South, East]\n"
-                        "Example: area=['23', '-161', '18', '-154'] for Hawaii\n"
-                        "Or use predefined areas: HAWAII, CONUS, TEXAS, CALIFORNIA \n \n")
-    
+def fetch_data(stime, etime, file_path):
     CDS.retrieve(
         "reanalysis-era5-single-levels",
         {
@@ -88,9 +77,9 @@ def fetch_data(stime, etime, file_path, area=None):
                 "geopotential",
                 "10m_wind_gust_since_previous_post_processing",
             ],
-            "area": area,  # Use the passed area
-            "time": pd.date_range(stime, etime+timedelta(1), freq="h", normalize=True).strftime("%H:%M").unique().tolist(),
-            "day": pd.date_range(stime, etime, freq="h", inclusive="both").strftime("%d").unique().tolist(),
+            "area": ["58", "-130", "24", "-60"],
+            "time": pd.date_range(stime, etime+timedelta(1), freq="h", normalize=True).strftime("%H:%M").unique().tolist(),  # normalize for each hours. add one day for 24 hours
+            "day": pd.date_range(stime, etime, freq="h", inclusive="left").strftime("%d").unique().tolist(),  # don't include the last day which is new week
             "month": pd.date_range(stime, etime, freq="h").strftime("%m").unique().tolist(),
             "year": pd.date_range(stime, etime, freq="h").strftime("%Y").unique().tolist(),
         },
@@ -179,7 +168,7 @@ def NCtoPWW(df, nc_path):
 
     # * get the station data
     print(os.getcwd())
-    station = pd.read_parquet("station/hawaii_station.parquet")  # station.parquet
+    station = pd.read_parquet("station.parquet")  # station.parquet
     aMinLat = station.Latitude.min()
     aMaxLat = station.Latitude.max()
     aMinLon = station.Longitude.min()
@@ -196,7 +185,7 @@ def NCtoPWW(df, nc_path):
     aPWWVersion = 1
     LOC_FC: int = 0  # for extra loc variables from table 1
     VARCOUNT: int = arr.shape[1]  # Set this to the number of weather variable types you have
-    sta = open("station/hawaii_era5_station.pkl", "rb").read()
+    sta = open("era5_station.pkl", "rb").read()
 
     with open(nc_path, "wb") as file:
         # ......... FILE HEADER .........#
@@ -231,46 +220,11 @@ def NCtoPWW(df, nc_path):
         file.write(arr.tobytes())
 
 
+def pack_quarter():
+    """'pack the data into each  quarter"""
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def pack_quarter(target_date=None):
-    if target_date is None:
-        today = datetime.now() - timedelta(days=7)
-    else:
-        today = target_date
-    
+    today = datetime.now() - timedelta(days=7)  # have some delay for the time to download the data and be ready for processing
     quarter = (today.month - 1) // 3 + 1
-
-
     print(f"Current Quarter: {quarter}")
     quarter_lookup = {  # not sure if there is a better way to do this, this is robust for leap year
         1: [datetime(today.year, 1, 1), datetime(today.year, 3, 31)],
@@ -301,167 +255,35 @@ def pack_quarter(target_date=None):
 
     # Merge the files, due to the stupid way the nc was spread into 3 files
     ncs = []
-    actual_dates = []
     for nc_path in matched_files:
         ds_acc = xr.open_dataset(f"{nc_path}/data_stream-oper_stepType-accum.nc")
         ds = xr.open_dataset(f"{nc_path}/data_stream-oper_stepType-instant.nc")
         ds_gust = xr.open_dataset(f"{nc_path}/data_stream-oper_stepType-max.nc")
         ncs.append(xr.merge([ds, ds_acc, ds_gust]))
-        # Extract actual date from filename for date range naming
-        match = date_pattern.search(nc_path)
-        if match:
-            actual_dates.append(datetime.strptime(match.group(1), "%Y%m%d"))
-    
     ds = xr.concat(ncs, dim="valid_time")
     ds = ds.dropna("valid_time", how="all")
     ds = ds.drop_duplicates("valid_time")
-    
-    # Create filename based on actual date range of available data
-    if actual_dates:
-        actual_start = min(actual_dates)
-        actual_end = max(actual_dates)
-        if actual_start == actual_end:
-            # Single date - only show date once
-            file_name = f"Hawaii_{actual_start.strftime('%Y-%m-%d')}"
-        else:
-            # Date range - show start to end
-            file_name = f"Hawaii_{actual_start.strftime('%Y-%m-%d')}_to_{actual_end.strftime('%Y-%m-%d')}"
-    else:
-        # Fallback to quarter naming if no files found
-        file_name = f"Hawaii{quarter_start.year}_Q{quarter}"
-    
+    file_name = f"NorthAmerican{quarter_start.year}_Q{quarter}"
     return ds, file_name
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def get_date_range(start_date=None, end_date=None):
-    # Validate date types
-    if start_date is not None and not isinstance(start_date, datetime):
-        raise TypeError(f"start_date must be a datetime object, got {type(start_date)}.\n"
-                       "Example: datetime(2025, 8, 10)")
-    
-    if end_date is not None and not isinstance(end_date, datetime):
-        raise TypeError(f"\n \n end_date must be a datetime object, got {type(end_date)}.\n"
-                       "Example: datetime(2025, 8, 15)")
-    
-    # Validate date logic
-    if start_date is not None and end_date is not None and end_date < start_date:
-        raise ValueError(f"\n \n end_date ({end_date.strftime('%Y-%m-%d')}) cannot be before start_date ({start_date.strftime('%Y-%m-%d')}) \n \n ")
-    
-    if start_date is None:
-        # Default behavior - last 2 weeks
-        today = datetime.now()
-        current_date = today - timedelta(days=5)
-        past_date = current_date - timedelta(weeks=2)
-        dates = pd.date_range(past_date, current_date, freq="D", inclusive="both", normalize=True)
-    elif end_date is None:
-        # Single date
-        dates = pd.date_range(start_date, start_date, freq="D", normalize=True)
-    else:
-        # Date range
-        dates = pd.date_range(start_date, end_date, freq="D", inclusive="both", normalize=True)
-    
-    return dates
-
-def main(start_date=None, end_date=None, area=None):
+def main():
     # * Check if the data folder exists, if not create it
     check = lambda p: os.makedirs(p, exist_ok=True)
     check(f"{Data}/nc/")
-    check(f"{Data}/pww/quarter/")
+    check(f"{Data}/pww/quater/")
     check(f"{Data}/pww/daily/")
     check(f"{Data}/zip/")
 
-    # * Get date range based on parameters
-    dates = get_date_range(start_date, end_date)
-    
-    print(f"Fetching data from {dates[0].strftime('%Y-%m-%d')} to {dates[-1].strftime('%Y-%m-%d')}")
+    today = datetime.now()
+    # * define the start and end time for the data to be fetched
+    current_date = today - timedelta(days=20)  # give some time for the data to be ready on server
+    past_date = current_date - timedelta(weeks=5)  # get data for the last 4 weeks
+    dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
+    print(f"Fetching data from {past_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}")
+
 
     # ******************** CORRECTED SECTION START ********************
     # * Setup Google Drive authentication using the service account
@@ -472,6 +294,9 @@ def main(start_date=None, end_date=None, area=None):
     gauth.ServiceAuth() # This method takes no arguments
     drive = GoogleDrive(gauth)
     # ********************* CORRECTED SECTION END *********************
+
+
+
 
     # * import the helper functions
     hp = helper(logger)
@@ -485,6 +310,7 @@ def main(start_date=None, end_date=None, area=None):
     date_ = []  # store the date for meta file
     status_ = []  # store the status for meta file
 
+
 # To this (for example)
     for d in tqdm(dates):
         try:  # * fetch the data---> convert the zip to nc---> convert the nc to pww
@@ -493,115 +319,79 @@ def main(start_date=None, end_date=None, area=None):
             month = f"{processing_date.month:02d}"
             year = f"{processing_date.year}"
             file_name = f"{year}{month}{day}"
-            
-            # Check if data already exists locally
-            nc_folder_path = f"{Data}/nc/{file_name}"
-            zip_file_path = f"{Data}/zip/{file_name}.zip"
-            
-            if os.path.exists(nc_folder_path) and os.path.exists(zip_file_path):
-                # Data already exists, just process it
-                # print(f"Data for {processing_date} already exists locally, processing...")
-                ds = zip_to_nc(zip_file_path, nc_folder_path)
-            else:
-                # Need to download data
-                # print(f"Downloading data for {processing_date}...")
-                fetch_data(processing_date, processing_date, zip_file_path, area=area)  # Pass area here
-                check(nc_folder_path)
-                ds = zip_to_nc(zip_file_path, nc_folder_path)
-            
+            fetch_data(processing_date, processing_date, f"{Data}/zip/{file_name}.zip") # Make sure to update all uses
+            check(f"{Data}/nc/{file_name}")
+            ds = zip_to_nc(f"{Data}/zip/{file_name}.zip", f"{Data}/nc/{file_name}/")
             if ds.isnull().to_array().sum().values > 0:
-                # Update meta immediately for missing data
-                meta = pd.concat([meta, pd.DataFrame({"date": [d], "status": [False]})], ignore_index=True)
-                meta = meta.drop_duplicates(subset="date", keep="last")
-                meta.to_csv(f"{Data}/meta.csv", index=False)
+                date_.append(d)
+                status_.append(False)
                 print(f"Data for {processing_date} have {ds.isnull().sum().sum()} missing data")
             # --- Change it to this ---
             else:
                 NCtoPWW(ds, f"{Data}/pww/daily/{file_name}.pww")  # Process the data first
-                # Update meta immediately for successful processing
-                meta = pd.concat([meta, pd.DataFrame({"date": [d], "status": [True]})], ignore_index=True)
-                meta = meta.drop_duplicates(subset="date", keep="last")
-                meta.to_csv(f"{Data}/meta.csv", index=False)
-                # print(f"Data for {processing_date} have been successfully processed")
+                date_.append(d)
+                status_.append(True)  # Only mark as True if the above line succeeds
+                print(f"Data for {processing_date} have been successfully processed")
         except Exception as e:
-            # Update meta immediately for failed processing
-            meta = pd.concat([meta, pd.DataFrame({"date": [d], "status": [False]})], ignore_index=True)
-            meta = meta.drop_duplicates(subset="date", keep="last")
-            meta.to_csv(f"{Data}/meta.csv", index=False)
-            print(f"\n \n \n Error in process data for {processing_date}, {e}") # <--- Update here as well
+            print(f"Error in process data for {processing_date}, {e}") # <--- Update here as well
+
+
+    # * save the update metafile, and try other dates
+    meta = pd.concat([meta, pd.DataFrame({"date": date_, "status": status_})], ignore_index=True)
+    meta = meta.drop_duplicates(subset="date", keep="last")
+    meta.to_csv(f"{Data}/meta.csv", index=False)
 
     # * pack the data into each quarter
     #! need to consder the date the file is mssing after packing
-    # ds, file_name = pack_quarter()
-    # ds, file_name = pack_quarter(datetime(2023, 7, 15))  # Any date in July 2023
-    if start_date and end_date:
-        # Use the middle date of the range for quarter determination
-        quarter_date = start_date + (end_date - start_date) / 2
-    elif start_date:
-        quarter_date = start_date
-    else:
-        quarter_date = None
-        
-    ds, file_name = pack_quarter(quarter_date)
-    # print(ds)
-    NCtoPWW(ds, f"{Data}/pww/quarter/{file_name}.pww")
+    ds, file_name = pack_quarter()
+    print(ds)
+    NCtoPWW(ds, f"{Data}/pww/quater/{file_name}.pww")
+
+
+
+
 
     # team overbye google drive
-    # daily_folder_id = "1jN1NP3b5Nby-gpy5w1rqe2cgctESxqO-"
-    # daily_archive_folder_id = "1QkSwW9eLtBjo0Q5ia8akZkMpqJuMivDp"
-    # quarterly_folder_id = "12U8PNHHGIxCy8_GRzsF2KxZ4GneMWy6h"
+    daily_folder_id = "1jN1NP3b5Nby-gpy5w1rqe2cgctESxqO-"
+    daily_archive_folder_id = "1QkSwW9eLtBjo0Q5ia8akZkMpqJuMivDp"
+    quarterly_folder_id = "12U8PNHHGIxCy8_GRzsF2KxZ4GneMWy6h"
+
 
         
-    # test folders cds 
+    # # test folders
     # daily_folder_id = "1dmXrU8qtkMkPbQl6QxNToZBUmjIORIxe"
     # daily_archive_folder_id = "1EepB8GlTLqOl5iSgXz0WEINw6lcjyuaa"
     # quarterly_folder_id = "1h4TeCcAc0khTkeGFtSNubwgFsY5CD8pH"
 
-    # hawaii
-    # daily_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
-    # daily_archive_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
-    # quarterly_folder_id = "10CBuzq1RwiswXkV7T_cVWCjiLhCaKngF"
+
+
+
+
+
+
 
     # Before archiving, upload only truly new files
-    # logger.info("Uploading daily .pww files to the cloud")
-    # hp.upload_to_drive(drive, daily_folder_id, f"{Data}/pww/daily/*.pww", overwrite=False,
-    #     archive_folder_id=daily_archive_folder_id  # Add this!
-    #     )
+    logger.info("Uploading daily .pww files to the cloud")
+    hp.upload_to_drive(drive, daily_folder_id, f"{Data}/pww/daily/*.pww", overwrite=False,
+        archive_folder_id=daily_archive_folder_id  # Add this!
+        )
 
-    # logger.info("Archiving old files from the daily folder")
-    # hp.archive_folder(drive, daily_folder_id, daily_archive_folder_id, timedelta(weeks=2))
-
-    # logger.info(f"Uploading {file_name}.pww to the cloud")
-    # # Upload the quarterly data, overwriting any existing file with the same name
-    # hp.upload_to_drive(drive, quarterly_folder_id, f"{Data}/pww/quarter/*.pww", overwrite=True)
+    logger.info("Archiving old files from the daily folder")
+    hp.archive_folder(drive, daily_folder_id, daily_archive_folder_id, timedelta(weeks=2))
 
 
 
 
+    logger.info(f"Uploading {file_name}.pww to the cloud")
+    # Upload the quarterly data, overwriting any existing file with the same name
+    hp.upload_to_drive(drive, quarterly_folder_id, f"{Data}/pww/quater/*.pww", overwrite=True)
+    # ********************* MODIFIED SECTION END *********************
 
 
 
 
 
-# Now you can specify coordinates right here at the bottom!
+
+
 if __name__ == "__main__":
-    # Common coordinate sets for easy copy/paste:
-    HAWAII = ["23", "-161", "18", "-154"]
-    CONUS = ["58", "-130", "24", "-60"]  # Continental US
-    TEXAS = ["37", "-107", "25", "-93"]
-    CALIFORNIA = ["42", "-125", "32", "-114"]
-    
-    # Examples of how to call:
-    
-   # Option 1: Default behavior (Hawaii, last 2 weeks)  
-    # main(area=HAWAII)
-
-    # Option 2: Single date with custom area
-    # main(start_date=datetime(2023, 7, 15), area=TEXAS)
-
-    # Option 3: Date range with custom coordinates
-    main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 8, 15), area=HAWAII)
-    
-    # Option 4: Custom coordinates 
-    # main(start_date=datetime(2025, 8, 10), end_date=datetime(2025, 9, 6), 
-    #      area=["30", "-100", "25", "-95"])  # CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, CUSTOM AREA, 
+    main()
