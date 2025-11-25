@@ -185,7 +185,7 @@ def NCtoPWW(df, nc_path):
     aPWWVersion = 1
     LOC_FC: int = 0  # for extra loc variables from table 1
     VARCOUNT: int = arr.shape[1]  # Set this to the number of weather variable types you have
-    sta = open("era5_station.pkl", "rb").read()
+    sta = open("station/era5_station.pkl", "rb").read()
 
     with open(nc_path, "wb") as file:
         # ......... FILE HEADER .........#
