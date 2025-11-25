@@ -11,6 +11,6 @@ data/
 __pycache__/
 
 # Ignore parquet, pickle, and NetCDF files
-*.parquet
+
 *.pkl
 *.nc

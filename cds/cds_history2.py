@@ -168,7 +168,7 @@ def NCtoPWW(df, nc_path):
 
     # * get the station data
     print(os.getcwd())
-    station = pd.read_parquet("station.parquet")  # station.parquet
+    station = pd.read_parquet("station/station.parquet")  # station.parquet
     aMinLat = station.Latitude.min()
     aMaxLat = station.Latitude.max()
     aMinLon = station.Longitude.min()
