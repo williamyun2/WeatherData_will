@@ -73,7 +73,7 @@ class helper:
             match = date_pattern.search(file_title)
             if match:
                 # Extract and parse the date from the file title
-                date = datetime.strptime(match.group(0), date_format)
+                date = datetime.strptime(match.group(1), date_format)
                 if date < limit:
                     # Move the file to the archive folder
                     file_metadata["parents"] = [{"id": archive_folder_id}]

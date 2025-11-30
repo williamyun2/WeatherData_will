@@ -6,5 +6,5 @@ services:
     environment:
       TZ: ${TZ:-America/Chicago}
     volumes:
-      - ${DATA_PATH:-./data}:/hrrr_historical/data
+      - E:\DATA\hrrr_historical:/hrrr_historical/data
     restart: unless-stopped

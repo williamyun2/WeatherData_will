@@ -334,6 +334,7 @@ def manual_processing():
     logger.info("Manual processing complete!")
     logger.info(f"ZIP files location: {HISTORICAL_ZIP_FOLDER}")
 
+
 def main():
     """Main function to process data automatically based on the date."""
     # Ensure directories exist
@@ -358,10 +359,8 @@ def main():
     logger.info("Checking for old daily files to archive...")
     if drive:
         try:
-            # Use the helper's archive_folder function
-            # It expects a date pattern and format - need to adjust for our CONUS_YYYY_MM_DD.zip format
             limit_timedelta = timedelta(days=30)
-            date_pattern = re.compile(r"CONUS_(\d{4}_\d{2}_\d{2})")  # Match CONUS_YYYY_MM_DD format
+            date_pattern = re.compile(r"CONUS_(\d{4}_\d{2}_\d{2})")
             date_format = "%Y_%m_%d"
             
             hp.archive_folder(
@@ -377,29 +376,128 @@ def main():
     else:
         logger.warning("Google Drive not available, skipping archive cleanup")
     
-    # Check if today is the first day of the month
+    # SECOND: Check for missing daily files in the past 30 days
+    logger.info("Checking for missing daily files in the past 30 days...")
+    missing_daily_dates = []
+    
+    if drive:
+        try:
+            # Get all files currently in the daily folder
+            cloud_files = drive.ListFile({"q": f"'{DAILY_DRIVE_FOLDER_ID}' in parents and trashed=false"}).GetList()
+            cloud_file_names = {file["title"] for file in cloud_files}
+            
+            logger.info(f"Found {len(cloud_file_names)} files in daily folder")
+            
+            # Check each day in the past 30 days
+            for days_ago in range(1, 31):  # 1 to 30 days ago
+                check_date = today - timedelta(days=days_ago)
+                expected_filename = f"CONUS_{check_date.strftime('%Y_%m_%d')}.zip"
+                
+                if expected_filename not in cloud_file_names:
+                    missing_daily_dates.append(check_date)
+                    logger.info(f"Missing daily file: {expected_filename}")
+            
+            if missing_daily_dates:
+                logger.info(f"Found {len(missing_daily_dates)} missing daily files in the past 30 days")
+            else:
+                logger.info("No missing daily files in the past 30 days")
+                
+        except Exception as e:
+            logger.error(f"Error checking for missing daily files: {e}")
+    
+    # NEW: Check for missing monthly files in the past 6 months
+    logger.info("Checking for missing monthly files in the past 6 months...")
+    missing_monthly_dates = []
+    
+    if drive:
+        try:
+            # Get all files currently in the monthly folder
+            monthly_files = drive.ListFile({"q": f"'{MONTHLY_DRIVE_FOLDER_ID}' in parents and trashed=false"}).GetList()
+            monthly_file_names = {file["title"] for file in monthly_files}
+            
+            logger.info(f"Found {len(monthly_file_names)} files in monthly folder")
+            
+            # Check each of the past 6 months
+            for months_ago in range(1, 7):  # 1 to 6 months ago
+                # Get the first day of the month X months ago
+                check_date = (today.replace(day=1) - timedelta(days=1))  # Last month's last day
+                for _ in range(months_ago - 1):
+                    check_date = (check_date.replace(day=1) - timedelta(days=1))
+                
+                check_month_start = check_date.replace(day=1)
+                expected_filename = f"CONUS{check_month_start.strftime('%Y_%m')}.zip"
+                
+                if expected_filename not in monthly_file_names:
+                    missing_monthly_dates.append(check_month_start)
+                    logger.info(f"Missing monthly file: {expected_filename}")
+            
+            if missing_monthly_dates:
+                logger.info(f"Found {len(missing_monthly_dates)} missing monthly files in the past 6 months")
+            else:
+                logger.info("No missing monthly files in the past 6 months")
+                
+        except Exception as e:
+            logger.error(f"Error checking for missing monthly files: {e}")
+    
+    # THIRD: Process yesterday's data (normal daily processing)
+    logger.info(f"Processing yesterday's data: {yesterday_str}")
+    yesterday_success = process_one_day(yesterday_str, fxx, product, regex, state, drive, hp)
+    
+    if yesterday_success:
+        logger.info(f"Successfully processed daily data for {yesterday_str}")
+    else:
+        logger.error(f"Failed to process daily data for {yesterday_str}")
+    
+    cleanup_grib()
+    
+    # FOURTH: Process missing daily files from the past 30 days
+    if missing_daily_dates:
+        logger.info(f"Processing {len(missing_daily_dates)} missing daily files...")
+        successful = 0
+        failed = 0
+        
+        for i, missing_date in enumerate(missing_daily_dates, 1):
+            logger.info(f"Processing missing daily file {i}/{len(missing_daily_dates)}: {missing_date.strftime('%Y-%m-%d')}")
+            
+            success = process_one_day(missing_date, fxx, product, regex, state, drive, hp)
+            if success:
+                successful += 1
+            else:
+                failed += 1
+            
+            cleanup_grib()
+        
+        logger.info(f"Missing daily files summary: {successful} successful, {failed} failed")
+    
+    # FIFTH: Process missing monthly files from the past 6 months
+    if missing_monthly_dates:
+        logger.info(f"Processing {len(missing_monthly_dates)} missing monthly files...")
+        successful = 0
+        failed = 0
+        
+        for i, missing_month in enumerate(missing_monthly_dates, 1):
+            logger.info(f"Processing missing monthly file {i}/{len(missing_monthly_dates)}: {missing_month.strftime('%Y-%m')}")
+            
+            success = process_one_month(missing_month, fxx, product, regex, state, drive, hp)
+            if success:
+                successful += 1
+            else:
+                failed += 1
+            
+            cleanup_grib()
+        
+        logger.info(f"Missing monthly files summary: {successful} successful, {failed} failed")
+    
+    # SIXTH: Check if today is the first day of the month for monthly processing
     if today.day == 1:
-        logger.info(f"First day of month detected! Processing both yesterday's data and entire previous month.")
-        
-        # Process yesterday's data (normal daily processing)
-        logger.info(f"Step 1: Processing yesterday's daily data: {yesterday_str}")
-        daily_success = process_one_day(yesterday_str, fxx, product, regex, state, drive, hp)
-        
-        if daily_success:
-            logger.info(f"Successfully processed daily data for {yesterday_str}")
-        else:
-            logger.error(f"Failed to process daily data for {yesterday_str}")
-        
-        # Clean up GRIB files after daily processing
-        cleanup_grib()
+        logger.info(f"First day of month detected! Processing entire previous month.")
         
         # Process the entire previous month
-        # Get the first day of last month
         last_month = today.replace(day=1) - timedelta(days=1)  # Go to last day of previous month
         last_month_start = last_month.replace(day=1)  # First day of that month
         
         last_month_str = last_month_start.strftime("%Y-%m")
-        logger.info(f"Step 2: Processing entire previous month: {last_month_str}")
+        logger.info(f"Processing entire previous month: {last_month_str}")
         
         monthly_success = process_one_month(last_month_start, fxx, product, regex, state, drive, hp)
         
@@ -407,25 +505,10 @@ def main():
             logger.info(f"Successfully processed monthly data for {last_month_str}")
         else:
             logger.error(f"Failed to process monthly data for {last_month_str}")
-        
-        # Return True if at least one succeeded
-        success = daily_success or monthly_success
-        
-        logger.info(f"First-of-month processing summary: Daily={daily_success}, Monthly={monthly_success}")
-        
-    else:
-        # Process yesterday's data (normal daily processing)
-        logger.info(f"Regular daily processing for yesterday: {yesterday_str}")
-        
-        success = process_one_day(yesterday_str, fxx, product, regex, state, drive, hp)
-        
-        if success:
-            logger.info(f"Successfully processed daily data for {yesterday_str}")
-        else:
-            logger.error(f"Failed to process daily data for {yesterday_str}")
     
     logger.info("Historical processing complete!")
-    return success
+    return True
+
 
 if __name__ == "__main__":
     import sys
