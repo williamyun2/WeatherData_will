@@ -517,7 +517,7 @@ def main():
     
     # Setup Google Drive API with service account
     SCOPES = ['https://www.googleapis.com/auth/drive']
-    SERVICE_ACCOUNT_FILE = 'pydrive2-461721-19b0d14ec905.json'
+    SERVICE_ACCOUNT_FILE = 'pydrive2-461721-9e229bd9f153.json'
 
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)

@@ -24,5 +24,11 @@ services:
     build: .
     image: twatlebob/efield:latest4  # Tag for Docker Hub
     container_name: container_efield
+    environment:
+      TZ: America/Chicago
+    working_dir: /efield
+    volumes:
+      - E:\DATA\E-Field:/efield/data
+    restart: unless-stopped
 
 # dogshit method of building on personal laptop then docker-compose on target to E drive.
