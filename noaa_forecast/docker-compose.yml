@@ -9,9 +9,5 @@ services:
       TZ: America/Chicago
     working_dir: /noaa                    # Match your Dockerfile's WORKDIR
     volumes:
-      - volume_noaa_data:/noaa/data
+      - E:\DATA\NOAA_weather_forecast:/noaa/data
     restart: unless-stopped
-
-volumes:
-  volume_noaa_data:
-    driver: local
