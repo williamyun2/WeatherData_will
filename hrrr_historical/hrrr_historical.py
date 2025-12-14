@@ -19,6 +19,8 @@ import logging
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import shutil
+import psutil
+import gc
 
 warnings.filterwarnings("ignore", message="This pattern is interpreted as a regular expression, and has match groups.")
 warnings.filterwarnings("ignore", category=FutureWarning, message="In a future version of xarray the default value for compat will change")
@@ -72,6 +74,38 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =========================
+# Memory Monitoring Functions
+# =========================
+
+def get_memory_usage():
+    """Get current memory usage in GB."""
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    memory_gb = memory_info.rss / 1024**3
+    return memory_gb
+
+def log_memory_usage(context=""):
+    """Log current memory usage with optional context."""
+    memory_gb = get_memory_usage()
+    system = psutil.virtual_memory()
+    system_used_gb = system.used / 1024**3
+    system_total_gb = system.total / 1024**3
+    system_percent = system.percent
+    
+    log_msg = f"Memory Usage {context}: Process={memory_gb:.2f}GB | System={system_used_gb:.2f}GB/{system_total_gb:.2f}GB ({system_percent}%)"
+    logger.info(log_msg)
+    return memory_gb
+
+def force_garbage_collection():
+    """Force garbage collection and log memory before/after."""
+    before = get_memory_usage()
+    gc.collect()
+    after = get_memory_usage()
+    freed = before - after
+    logger.info(f"Garbage collection: {before:.2f}GB -> {after:.2f}GB (freed {freed:.2f}GB)")
+    return freed
+
+# =========================
 # Utility Functions
 # =========================
 
@@ -104,7 +138,10 @@ def get_drive_folder_id(mode):
         raise ValueError("Mode must be 'day', 'month', or 'archive'")
 
 def download_HRRR_fast(date_, fxx_):
-    """Download HRRR data using FastHerbie."""
+    """Download HRRR data using FastHerbie with memory monitoring."""
+    log_memory_usage("[Before Download]")
+    
+    H = None
     try:
         H = FastHerbie(
             date_,
@@ -115,13 +152,20 @@ def download_HRRR_fast(date_, fxx_):
         )
         regex = r":(?:TMP|DPT|UGRD|VGRD|TCDC|DSWRF|COLMD|GUST|CPOFP|PRATE):((2|8|10|80) m above|entire atmosphere|surface|entire atmosphere single layer)"
         H.download(regex)
-        del H
+        
+        log_memory_usage("[After Download]")
+        
     except Exception as e:
         logger.error(f"Error in fetching data for {date_}: {e}")
+    finally:
+        # Explicit cleanup
+        if H is not None:
+            del H
+        force_garbage_collection()
 
 def process_and_upload(target_date, fxx, product, regex, state, drive, hp, mode="day"):
     """
-    Process HRRR data and upload to Google Drive.
+    Process HRRR data and upload to Google Drive with memory monitoring.
     Automatically routes to correct folder based on mode.
     
     Args:
@@ -134,6 +178,8 @@ def process_and_upload(target_date, fxx, product, regex, state, drive, hp, mode=
         hp: Helper object
         mode: "day" or "month" processing mode
     """
+    log_memory_usage(f"[START {mode} processing]")
+    
     if isinstance(target_date, str):
         target_date = pd.to_datetime(target_date)
     
@@ -169,6 +215,9 @@ def process_and_upload(target_date, fxx, product, regex, state, drive, hp, mode=
     logger.info(f"Processing {description}")
     logger.info(f"Will upload to {folder_name} folder on Google Drive")
     
+    ds = None
+    processed_ds = None
+    
     try:
         # Check if ZIP already exists locally first
         if os.path.exists(zip_path):
@@ -201,27 +250,49 @@ def process_and_upload(target_date, fxx, product, regex, state, drive, hp, mode=
         logger.info(f"Downloading GRIB data for {description}...")
         download_HRRR_fast(dates, fxx_=[fxx])
         
+        log_memory_usage("[After GRIB download]")
+        
         # Process data
         logger.info(f"Processing weather data...")
         ds = get_multiple_HRRR(dates, fxx, product, regex, GRIB_FOLDER)
+        
+        log_memory_usage("[After get_multiple_HRRR]")
         
         if ds is not None:
             # Apply HRRR processing
             processed_ds = hrrr_process(ds)
             
+            log_memory_usage("[After hrrr_process]")
+            
+            # Clean up original dataset
+            del ds
+            ds = None
+            force_garbage_collection()
+            
             # Create PWW file
             logger.info(f"Creating PWW file: {file_name}")
             NC2PWW(processed_ds, pww_path, state)
             
+            log_memory_usage("[After NC2PWW]")
+            
+            # Clean up processed dataset
+            del processed_ds
+            processed_ds = None
+            force_garbage_collection()
+            
             # Create zip file
             logger.info(f"Compressing to: {zip_name}")
             hp.zip_file(pww_path, zip_path, remove=True)  # Remove PWW after zipping
+            
+            log_memory_usage("[After zip_file]")
             
             # Upload to Google Drive
             if drive:
                 logger.info(f"Uploading {zip_name} to Google Drive {folder_name} folder...")
                 hp.upload_to_drive(drive, folder_id, zip_path)
                 logger.info(f"Successfully uploaded {zip_name}")
+                
+                log_memory_usage("[After upload]")
                 
                 # Optionally remove local zip file after upload
                 # os.remove(zip_path)
@@ -236,7 +307,16 @@ def process_and_upload(target_date, fxx, product, regex, state, drive, hp, mode=
             
     except Exception as e:
         logger.error(f"Error processing {target_date}: {e}")
+        log_memory_usage("[After ERROR]")
         return False
+    finally:
+        # Ensure cleanup of large objects
+        if ds is not None:
+            del ds
+        if processed_ds is not None:
+            del processed_ds
+        force_garbage_collection()
+        log_memory_usage("[END processing]")
 
 def process_one_day(target_date, fxx, product, regex, state, drive=None, hp=None):
     """Process exactly one day (24 hours) - uploads to daily folder"""
@@ -249,10 +329,16 @@ def process_one_month(target_month, fxx, product, regex, state, drive=None, hp=N
 def cleanup_grib():
     """Clean up GRIB files after processing."""
     try:
+        log_memory_usage("[Before GRIB cleanup]")
+        
         if os.path.exists(GRIB_FOLDER):
             shutil.rmtree(GRIB_FOLDER)
             os.makedirs(GRIB_FOLDER, exist_ok=True)
             logger.info("GRIB files cleaned up.")
+            
+        force_garbage_collection()
+        log_memory_usage("[After GRIB cleanup]")
+        
     except Exception as e:
         logger.warning(f"Failed to clean up GRIB files: {e}")
 
@@ -284,6 +370,7 @@ def process_date_range_with_cleanup(start_date, end_date, fxx, product, regex, s
     
     logger.info(f"Processing {len(date_range)} {mode}(s) from {start_date.date()} to {end_date.date()}")
     logger.info(f"Files will be uploaded to Google Drive {folder_name} folder")
+    log_memory_usage("[START date range]")
     
     for i, date in enumerate(date_range, 1):
         logger.info(f"Processing {mode} {i}/{len(date_range)}: {date.strftime('%Y-%m-%d')}")
@@ -297,11 +384,14 @@ def process_date_range_with_cleanup(start_date, end_date, fxx, product, regex, s
         # Clean up GRIB files after each processing unit
         cleanup_grib()
     
+    log_memory_usage("[END date range]")
     logger.info(f"Summary: {successful} successful, {failed} failed")
     return successful, failed
 
 def manual_processing():
     """Manual processing function for specific dates/ranges."""
+    log_memory_usage("[SCRIPT START]")
+    
     # Ensure directories exist
     ensure_directories()
     
@@ -331,12 +421,15 @@ def manual_processing():
     # OPTION 4: Process a range of months - UPLOADS TO MONTHLY FOLDER AUTOMATICALLY
     # process_date_range_with_cleanup("2025-01-01", "2025-06-01", fxx, product, regex, state, drive, hp, mode="month")
     
+    log_memory_usage("[SCRIPT END]")
     logger.info("Manual processing complete!")
     logger.info(f"ZIP files location: {HISTORICAL_ZIP_FOLDER}")
 
 
 def main():
     """Main function to process data automatically based on the date."""
+    log_memory_usage("[MAIN START]")
+    
     # Ensure directories exist
     ensure_directories()
     
@@ -506,6 +599,7 @@ def main():
         else:
             logger.error(f"Failed to process monthly data for {last_month_str}")
     
+    log_memory_usage("[MAIN END]")
     logger.info("Historical processing complete!")
     return True
 
