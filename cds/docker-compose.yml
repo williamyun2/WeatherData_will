@@ -10,10 +10,6 @@ services:
     working_dir: /cds
     restart: unless-stopped
     volumes:
-      - volume_cds_data:/cds/data
+      - E:\DATA\ERA5_HIS_weather:/cds/data
 
-volumes:
-  volume_cds_data:
-    driver: local
-
-
+# Remove the volumes section since we're using a bind mount now

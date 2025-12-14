@@ -279,7 +279,7 @@ def main():
 
     today = datetime.now()
     # * define the start and end time for the data to be fetched
-    current_date = today - timedelta(days=20)  # give some time for the data to be ready on server
+    current_date = today - timedelta(days=7)  # give some time for the data to be ready on server
     past_date = current_date - timedelta(weeks=5)  # get data for the last 4 weeks
     dates = pd.date_range(past_date, current_date, freq="D", inclusive="left", normalize=True)
     print(f"Fetching data from {past_date.strftime('%Y-%m-%d')} to {current_date.strftime('%Y-%m-%d')}")
